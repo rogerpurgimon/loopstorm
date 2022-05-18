@@ -2,13 +2,13 @@ import essentia
 import essentia.standard as es
 import essentia.streaming as ess
 #import matplotlib.pyplot as plt
-from pathlib import Path
+#from pathlib import Path
 import time
 
 
 def extract_mfcc(audio):
 	
-	script_dir = Path().resolve()
+	#script_dir = Path().resolve()
 	audio_file = audio
 	#audio_file = "audio1.wav"
 	start_time = time.time()
