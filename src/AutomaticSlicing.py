@@ -1,15 +1,23 @@
 import essentia
 from essentia.standard import *
+
 import IPython
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 
 class AutomaticSlicing:
 
-    def get_onsets_hfc(audio,fs):
-        od = OnsetDetection(method='hfc')
+    def __init__(self,loop):
+        self.loop = loop
+        self.fs = 44100
+        self.method='hfc'
+        self.type='hann'
 
-        w = Windowing(type='hann')
+
+    def get_onsets_hfc(loop):
+        od = OnsetDetection(method=loop.method)
+
+        w = Windowing(type=loop.type)
         fft = FFT()  # this gives us a complex FFT
         c2p = CartesianToPolar()  # and this turns it into a pair (magnitude, phase)
         pool = essentia.Pool()

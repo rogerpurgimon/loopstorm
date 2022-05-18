@@ -14,6 +14,14 @@ The application will start from an input user that decides the main loop, import
   ```sh
   git clone https://github.com/rogerpurgimon/loopstorm.git
   ```
+2. Install essentia. Read the installation instructions for your current OS:
+    * https://essentia.upf.edu/installing.html
+3. Install the [requirements][3]:
+<br/>In linux:
+
+```sh
+pip install -r requirements.txt
+```
 ### Executing program
 
 ## Help
@@ -27,3 +35,4 @@ The application will start from an input user that decides the main loop, import
 
 [1]:https://freesound.org/ "Freesound"
 [2]:https://github.com/MTG/essentia
+[3]:https://github.com/rogerpurgimon/loopstorm/blob/main/requirements.txt

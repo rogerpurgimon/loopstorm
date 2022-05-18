@@ -1,7 +1,7 @@
-pip==20.0.2
-Python==3.8.10
-essentia==2.1-beta6-dev
-numpy==1.8.2
+pip==22.1
+essentia==2.1b6.dev778
+numpy==1.22.3
 IPython==8.3.0
-scipy
-matplotlib
+scipy==1.8.1
+matplotlib==3.5.2
+PyQt5==5.15.6
