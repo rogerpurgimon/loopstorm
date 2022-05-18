@@ -1,6 +1,6 @@
 pip==20.0.2
 Python==3.8.10
-essentia
+essentia==2.1-beta6-dev
 numpy==1.8.2
 IPython==8.3.0
 scipy
