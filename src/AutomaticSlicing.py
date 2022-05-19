@@ -1,5 +1,5 @@
 import essentia
-from essentia.standard import *
+from essentia.standard import OnsetDetection
 import IPython
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
@@ -12,7 +12,7 @@ class AutomaticSlicing:
     def __call__(self,loop):
         #TODO
 
-    def get_onsets_hfc(loop):
+    def get_onsets(loop):
         od = OnsetDetection(method='hfc')
 
         w = Windowing(type='hann')
@@ -33,7 +33,7 @@ class AutomaticSlicing:
 
 
     def get_slices(loop):
-        onsets_hfc = get_onsets_hfc(loop)[0]
+        onsets_hfc = get_onsets(loop)[0]
         chopList = []
         for onset in range(len(onsets_hfc) - 1):
             chopList.append(loop[int(onsets_hfc[onset]):int((onsets_hfc[onset + 1]))])
