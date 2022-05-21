@@ -1,5 +1,17 @@
-import essentia.standard as es
+import essentia
+from essentia.standard import *
+import IPython.display
+import matplotlib.pyplot as plt
+
+from src.AutomaticSlicing import Slices
 
 if __name__ == '__main__':
-    any(["OnsetDetection" in algo for algo in es.algorithmNames()])
-    es.__spec__()
+    loop = MonoLoader(filename='../loops/audio2.wav')()
+    loop1 = Slices(loop)
+    onsets_hfc = loop1.get_onsets()
+    loop1.get_slices(onsets_hfc)
+
+    # chopList contain the list of slices, separately
+    print(loop1.chopList[0]) #this print the first slice
+
+
