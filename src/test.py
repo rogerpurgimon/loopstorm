@@ -3,7 +3,7 @@ from essentia.standard import *
 import IPython.display
 import matplotlib.pyplot as plt
 
-from src.AutomaticSlicing import Slices
+from AutomaticSlicing import Slices
 
 if __name__ == '__main__':
     loop = MonoLoader(filename='../loops/audio2.wav')()
