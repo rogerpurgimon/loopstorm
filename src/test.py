@@ -4,6 +4,7 @@ import IPython.display
 import matplotlib.pyplot as plt
 
 from AutomaticSlicing import Slices
+from mfcc_extractor import *
 
 if __name__ == '__main__':
     loop = MonoLoader(filename='../loops/audio2.wav')()
@@ -13,5 +14,8 @@ if __name__ == '__main__':
 
     # chopList contain the list of slices, separately
     print(loop1.chopList[0]) #this print the first slice
+    
+    mfccs = extract_mfcc(loop1.chopList[0])
+    print("The mfccs of the first slice are:", mfccs)
 
 
