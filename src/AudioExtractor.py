@@ -2,7 +2,7 @@ import essentia
 import numpy as np
 from essentia.standard import *
 
-class AudioManager:
+class AudioExtractor:
 
     def __init__(self,loop):
         self.loop = loop
