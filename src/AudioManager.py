@@ -27,3 +27,4 @@ class AudioManager:
 
     def similarity(self):
         return False
+
