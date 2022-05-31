@@ -49,6 +49,6 @@ class AudioExtractor:
         for frame in FrameGenerator(slice, frameSize=2048, hopSize=1024):
             mfcc_bands, mfcc_coeffs = mfcc(spectrum(w(frame)))
             mfcc_sin.append(mfcc_coeffs)
-        mfcc_sin = essentia.array(self.mfccs).T
+        mfcc_sin = essentia.array(mfcc_sin).T
         mfcc_sin = np.mean(mfcc_sin,axis=1)
         self.mfccs.append(mfcc_sin)
