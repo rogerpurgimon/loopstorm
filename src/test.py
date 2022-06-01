@@ -24,7 +24,9 @@ if __name__ == '__main__':
 
     manager.similarity()
 
-    print(manager.d['main_loop']['slices'][3])
+    print(manager.d['main_loop']['slices'][1]['info']) #slice audio
+    print(manager.d['main_loop']['slices'][1]['mfccs'])
+    print(manager.d['main_loop']['slices'][1]['similarity'])
 
 
 
