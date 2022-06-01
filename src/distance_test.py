@@ -25,6 +25,7 @@ if __name__ == '__main__':
     loop1.extract_mfcc(slice2)
 
 
+    print(loop1.mfccs[0])
     print(loop1.mfccs[1])
 
     d1 = distance.euclidean(loop1.mfccs[0], loop1.mfccs[1])

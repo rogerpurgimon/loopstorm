@@ -35,7 +35,7 @@ class AudioManager:
             if slave_idx==3:
                 self.d['slave_loop3']['slices'][nslice] = extractor_loop.chopList[nslice]
 
-            else:
+            if slave_idx==0:
                 self.d['main_loop']['slices'][nslice] = extractor_loop.chopList[nslice]
 
     def add_mfccs(self,loop,slave_idx):
@@ -64,7 +64,7 @@ class AudioManager:
                 self.d['slave_loop3']['slices'][nslice] = {}
                 self.d['slave_loop3']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
 
-        else:
+        if slave_idx==0:
             for nslice in range(len(self.d['main_loop']['slices'])):
                 extractor_loop.extract_mfcc(self.d['main_loop']['slices'][nslice])
 
@@ -75,28 +75,28 @@ class AudioManager:
     def similarity(self):
 
         for n in range(len(self.d['main_loop']['slices'])):
-            distance = np.inf
+            dist = np.inf
             idx = []
 
             #check the distances n slice --> to all slices in the slave loops
             for i in range(len(self.d['slave_loop1']['slices'])):
                 new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop1']['slices'][i]['mfccs'])
-                if new_dist < distance:
-                    distance = new_dist
+                if new_dist < dist:
+                    dist = new_dist
                     #fisrt argument reference the slave loop and the second referene the index
-                    idx = ['slave_loop1',i]
+                    idx = ['slave_loop1',i,dist]
 
             for j in range(len(self.d['slave_loop2']['slices'])):
-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave2_loop2']['slices'][j]['mfccs'])
-                if new_dist < distance:
-                    distance = new_dist
-                    idx = ['slave_loop2',j]
+                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop2']['slices'][j]['mfccs'])
+                if new_dist < dist:
+                    dist = new_dist
+                    idx = ['slave_loop2',j,dist]
 
             for k in range(len(self.d['slave_loop3']['slices'])):
                 new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop3']['slices'][k]['mfccs'])
-                if new_dist < distance:
-                    distance = new_dist
-                    idx = ['slave_loop3',k]
+                if new_dist < dist:
+                    dist = new_dist
+                    idx = ['slave_loop3',k,dist]
 
 
             #once we obtain the shortest distance we add the information to the dicctionary
