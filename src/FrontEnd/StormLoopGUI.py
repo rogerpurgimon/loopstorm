@@ -21,10 +21,12 @@ from AudioManager import AudioManager
 
 class LoopStormGUI(QMainWindow):
 
+    loops = []
+    current_frame = 0
     def __init__(self):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
-        self.loops = AudioManager()
+        #self.loops = AudioManager()
         self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, 4))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
@@ -55,6 +57,7 @@ class LoopStormGUI(QMainWindow):
         if len(loops) + len(current_file_loops) > limit:
             raise ValueError("Not enough slots available! Remove some loops from LoopStorm or from the loops folder.")
         else:
+            print("estem dins")
             loops.append(current_file_loops)
 
         #self.represent_loops()
@@ -103,20 +106,21 @@ class LoopStormGUI(QMainWindow):
         """
         event = threading.Event()
         data, fs = sf.read("audio1.wav", always_2d=True)
-        current_frame = 0
+        #data, fs = sf.read(, always_2d=True)
+        #current_frame = 0
         
         def callback(outdata, frames, time, status):
-            #current_frame = 0	
+            #global current_frame 	
             if status:
                 print(status)
-            chunksize = min(len(data) - current_frame, frames)
-            outdata[:chunksize] = data[current_frame:current_frame + chunksize]
+            chunksize = min(len(data) - self.current_frame, frames)
+            outdata[:chunksize] = data[self.current_frame:self.current_frame + chunksize]
             if chunksize < frames:
                 outdata[chunksize:] = 0
-                current_frame = 0            		
+                self.current_frame = 0            		
 		#raise sd.CallbackStop()
             else:
-                current_frame += chunksize
+                self.current_frame += chunksize
 
         stream = sd.OutputStream(
             samplerate=fs, channels=data.shape[1],
