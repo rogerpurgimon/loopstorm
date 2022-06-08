@@ -15,6 +15,8 @@ from essentia.standard import *
 
 from AudioManager import AudioManager
 
+import numpy as np
+
 # A venv was created in the file env in the leonardbalm file,
 # this is where the pip and the python3 is located
 
@@ -22,12 +24,14 @@ from AudioManager import AudioManager
 class LoopStormGUI(QMainWindow):
 
     loops = []
+    fs = []
     current_frame = 0
+    
     def __init__(self):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
         #self.loops = AudioManager()
-        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, 4))
+        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 4))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -37,7 +41,7 @@ class LoopStormGUI(QMainWindow):
         self.rightArrow.clicked.connect(lambda: self.arrow("right"))
         self.playButton.clicked.connect(lambda: self.play_button())
 
-    def import_loops(self, loops, limit):
+    def import_loops(self, loops, fs, limit):
         """
         Loops only come from the loops folder. Modify that folder if we want to use different loops.
         1. Check amount of loop slots available (this should be represented in a list somewhere)
@@ -45,21 +49,25 @@ class LoopStormGUI(QMainWindow):
         3. If not enough slots pop-up window with a warning and import amount of loops possible.
         """
         current_file_loops = []
+        sampling_rates = []
         directory = 'loops'
 
         # Filling an auxiliary list with all the loops in the loops file
         for filename in os.listdir(directory):
             arg = directory + "/" + filename
-            loop = MonoLoader(filename=arg)
+            loop, fs = sf.read(arg, always_2d=True)
+            #loop = MonoLoader(filename=arg)
             current_file_loops.append(loop)
+            sampling_rates.append(fs)
 
         # Checking if there are enough available slots
         if len(loops) + len(current_file_loops) > limit:
             raise ValueError("Not enough slots available! Remove some loops from LoopStorm or from the loops folder.")
         else:
-            print("estem dins")
-            loops.append(current_file_loops)
-
+            self.loops = current_file_loops
+            self.fs = sampling_rates
+            print("Loops compilats")            
+               
         #self.represent_loops()
 
     def represent_loops(self):
@@ -105,9 +113,12 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         event = threading.Event()
-        data, fs = sf.read("audio1.wav", always_2d=True)
+        #data, fs = sf.read(self.loops[0], always_2d=True)
         #data, fs = sf.read(, always_2d=True)
         #current_frame = 0
+        
+        data = self.loops[0]
+        fs = self.fs[0]
         
         def callback(outdata, frames, time, status):
             #global current_frame 	
