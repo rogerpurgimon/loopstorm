@@ -16,6 +16,7 @@ from essentia.standard import *
 from AudioManager import AudioManager
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 # A venv was created in the file env in the leonardbalm file,
 # this is where the pip and the python3 is located
@@ -24,7 +25,8 @@ import numpy as np
 class LoopStormGUI(QMainWindow):
 
     loops = []
-    fs = []
+    fs = 44100
+    selected_loop = 0
     current_frame = 0
     
     def __init__(self):
@@ -49,7 +51,7 @@ class LoopStormGUI(QMainWindow):
         3. If not enough slots pop-up window with a warning and import amount of loops possible.
         """
         current_file_loops = []
-        sampling_rates = []
+        #sampling_rates = []
         directory = 'loops'
 
         # Filling an auxiliary list with all the loops in the loops file
@@ -58,36 +60,49 @@ class LoopStormGUI(QMainWindow):
             loop, fs = sf.read(arg, always_2d=True)
             #loop = MonoLoader(filename=arg)
             current_file_loops.append(loop)
-            sampling_rates.append(fs)
+            #sampling_rates.append(fs)
 
         # Checking if there are enough available slots
         if len(loops) + len(current_file_loops) > limit:
             raise ValueError("Not enough slots available! Remove some loops from LoopStorm or from the loops folder.")
         else:
             self.loops = current_file_loops
-            self.fs = sampling_rates
-            print("Loops compilats")            
-               
-        #self.represent_loops()
+            #self.fs = sampling_rates
+            print("Loops compilats")    
+                 
+        
+        self.represent_loops()
 
     def represent_loops(self):
         """
         1. Check if a loop is selected.
         2. Erase loop data from the loops list somewhere.
         """
-        self.generate_image()
+        i = 0
+        for loop in self.loops:
+            self.generate_image(loop, i)
+            i += 1
     
-    def generate_image(self):
+    def generate_image(self, loop, i):
         """
         1. Check if a loop is selected.
         2. Erase loop data from the loops list somewhere.
         """
+        time = np.linspace(0, len(loop) / self.fs, num=len(loop))
+
+        plt.figure(1)
+        plt.figure(figsize=(15, 2))
+        plt.axis('off')
+        plt.plot(time, loop)
+        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png')
 
     def remove_loop(self):
         """
         1. Check if a loop is selected.
         2. Erase loop data from the loops list somewhere.
         """
+        self.loops.pop(self.selected_loop)
+        
 
     def export_master(self):
         """
@@ -100,6 +115,9 @@ class LoopStormGUI(QMainWindow):
         1. Check if a loop is selected.
         2. Erase loop data from the loops list somewhere.
         """
+        self.selected_loop = number
+        print("loop", self.selected_loop, "seleccionat")
+        
 
     def arrow(self, direction):
         """
@@ -114,11 +132,11 @@ class LoopStormGUI(QMainWindow):
         """
         event = threading.Event()
         #data, fs = sf.read(self.loops[0], always_2d=True)
-        #data, fs = sf.read(, always_2d=True)
         #current_frame = 0
         
-        data = self.loops[0]
-        fs = self.fs[0]
+        #we always assume the main loop is the main in loops[0]
+        data = self.loops[self.selected_loop]
+        fs = self.fs
         
         def callback(outdata, frames, time, status):
             #global current_frame 	
