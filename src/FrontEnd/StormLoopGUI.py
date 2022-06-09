@@ -90,7 +90,8 @@ class LoopStormGUI(QMainWindow):
     
     def generate_image(self, loop, i):
         """
-        Generates
+        Generates loop pictures.
+        Return none.
         """
         time = np.linspace(0, len(loop) / self.fs, num=len(loop))
 
