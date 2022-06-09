@@ -3,17 +3,17 @@
 
 import os
 import sys
-from PyQt5 import uic
+from PyQt5 import uic, QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication
 
 import threading
 import sounddevice as sd
 import soundfile as sf
 
-import essentia
-from essentia.standard import *
+#import essentia
+#from essentia.standard import *
 
-from AudioManager import AudioManager
+#from AudioManager import AudioManager
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -68,33 +68,39 @@ class LoopStormGUI(QMainWindow):
         else:
             self.loops = current_file_loops
             #self.fs = sampling_rates
-            print("Loops compilats")    
-                 
-        
+            print("Loops imported.")
+
         self.represent_loops()
 
     def represent_loops(self):
         """
-        1. Check if a loop is selected.
-        2. Erase loop data from the loops list somewhere.
+        Visually represents the loops imported.
+        Return void.
         """
+
         i = 0
         for loop in self.loops:
             self.generate_image(loop, i)
             i += 1
+
+        self.loop0.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic0.png"))
+        self.loop1.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic1.png"))
+        self.loop2.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic2.png"))
+
     
     def generate_image(self, loop, i):
         """
-        1. Check if a loop is selected.
-        2. Erase loop data from the loops list somewhere.
+        Generates
         """
         time = np.linspace(0, len(loop) / self.fs, num=len(loop))
 
         plt.figure(1)
         plt.figure(figsize=(15, 2))
+        plt.xlim([0, len(loop) / self.fs])
+        plt.ylim([-1, 1])
         plt.axis('off')
         plt.plot(time, loop)
-        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png')
+        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')
 
     def remove_loop(self):
         """
@@ -116,7 +122,7 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         self.selected_loop = number
-        print("loop", self.selected_loop, "seleccionat")
+        print("loop", self.selected_loop, "selected")
         
 
     def arrow(self, direction):

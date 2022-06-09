@@ -225,59 +225,64 @@ border-radius: 25px;
      <string>LoopStorm</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_13">
+   <widget class="QLabel" name="loop0">
     <property name="geometry">
      <rect>
       <x>100</x>
       <y>150</y>
-      <width>521</width>
-      <height>41</height>
+      <width>520</width>
+      <height>40</height>
      </rect>
     </property>
     <property name="text">
      <string>Master Loop</string>
     </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_14">
+   <widget class="QLabel" name="loop1">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>100</x>
       <y>200</y>
-      <width>521</width>
-      <height>41</height>
+      <width>520</width>
+      <height>40</height>
      </rect>
     </property>
     <property name="text">
      <string>Loop 1</string>
     </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_15">
+   <widget class="QLabel" name="loop2">
     <property name="geometry">
      <rect>
       <x>100</x>
       <y>250</y>
-      <width>521</width>
-      <height>41</height>
+      <width>520</width>
+      <height>40</height>
      </rect>
     </property>
     <property name="text">
      <string>Loop 2</string>
     </property>
-   </widget>
-   <widget class="QLabel" name="LoopPic1">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>150</y>
-      <width>521</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
     <property name="scaledContents">
      <bool>true</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>
