@@ -10,10 +10,10 @@ import threading
 import sounddevice as sd
 import soundfile as sf
 
-#import essentia
-#from essentia.standard import *
+import essentia
+from essentia.standard import *
 
-#from AudioManager import AudioManager
+from AudioManager import AudioManager
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,6 +32,7 @@ class LoopStormGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
+        self.setWindowTitle("Loopstorm")
         #self.loops = AudioManager()
         self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 4))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
@@ -41,8 +42,10 @@ class LoopStormGUI(QMainWindow):
         self.selectLoop2.clicked.connect(lambda: self.select_loop(2))
         self.leftArrow.clicked.connect(lambda: self.arrow("left"))
         self.rightArrow.clicked.connect(lambda: self.arrow("right"))
+        self.playButton.setCheckable(True)
         self.playButton.clicked.connect(lambda: self.play_button())
-
+        
+        
     def import_loops(self, loops, fs, limit):
         """
         Loops only come from the loops folder. Modify that folder if we want to use different loops.
@@ -153,17 +156,30 @@ class LoopStormGUI(QMainWindow):
             outdata[:chunksize] = data[self.current_frame:self.current_frame + chunksize]
             if chunksize < frames:
                 outdata[chunksize:] = 0
-                self.current_frame = 0            		
-		#raise sd.CallbackStop()
+                self.current_frame = 0
+
+            elif self.playButton.isChecked() == False:
+                outdata[chunksize:] = 0
+                raise sd.CallbackStop()
+	    
             else:
                 self.current_frame += chunksize
-
+                
         stream = sd.OutputStream(
-            samplerate=fs, channels=data.shape[1],
-            callback=callback, finished_callback=event.set)
+                samplerate=fs, channels=data.shape[1],
+                callback=callback, finished_callback=event.set)
+        
+        if self.playButton.isChecked():
+            print("estem dins")
+            
+            with stream:
+                event.wait()  # Wait until playback is finished   """       
+                
+        else:
+                     
+            print("estem fora")
 	
-        with stream:
-            event.wait()  # Wait until playback is finished
+        
 
 
 if __name__ == "__main__":
