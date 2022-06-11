@@ -28,8 +28,9 @@ class LoopStormGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
-        # self.loops = AudioManager()
+        self.setWindowTitle("Loopstorm")
         self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 3))
+        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 4))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -37,6 +38,7 @@ class LoopStormGUI(QMainWindow):
         self.selectLoop2.clicked.connect(lambda: self.select_loop(2))
         self.leftArrow.clicked.connect(lambda: self.arrow("left"))
         self.rightArrow.clicked.connect(lambda: self.arrow("right"))
+        self.playButton.setCheckable(True)
         self.playButton.clicked.connect(lambda: self.play_button())
         atexit.register(self.exit_handler)
 
@@ -152,15 +154,15 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         event = threading.Event()
-        # data, fs = sf.read(self.loops[0], always_2d=True)
-        # current_frame = 0
-
-        # we always assume the main loop is the main in loops[0]
+        #data, fs = sf.read(self.loops[0], always_2d=True)
+        #current_frame = 0
+        
+        #we always assume the main loop is the main in loops[0]
         data = self.loops[self.selected_loop]
         fs = self.fs
-
+        
         def callback(outdata, frames, time, status):
-            # global current_frame
+            #global current_frame 	
             if status:
                 print(status)
             chunksize = min(len(data) - self.current_frame, frames)
@@ -168,16 +170,23 @@ class LoopStormGUI(QMainWindow):
             if chunksize < frames:
                 outdata[chunksize:] = 0
                 self.current_frame = 0
-            # raise sd.CallbackStop()
+            elif self.playButton.isChecked() == False:
+                outdata[chunksize:] = 0
+                raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
 
         stream = sd.OutputStream(
-            samplerate=fs, channels=data.shape[1],
-            callback=callback, finished_callback=event.set)
+                samplerate=fs, channels=data.shape[1],
+                callback=callback, finished_callback=event.set)
 
-        with stream:
-            event.wait()  # Wait until playback is finished
+        if self.playButton.isChecked():
+            print("estem dins")
+            with stream:
+                event.wait()  # Wait until playback is finished   """
+        else:
+
+            print("estem fora")
 
     def exit_handler(self):
         for i in range(0,3):
