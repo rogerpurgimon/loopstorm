@@ -37,10 +37,9 @@ class LoopStormGUI(QMainWindow):
         self.selectLoop2.clicked.connect(lambda: self.select_loop(2))
         self.leftArrow.clicked.connect(lambda: self.arrow("left"))
         self.rightArrow.clicked.connect(lambda: self.arrow("right"))
-        self.playButton.setCheckable(True)
         self.playButton.clicked.connect(lambda: self.play_button())
+        self.playButton.setCheckable(True)
         atexit.register(self.exit_handler)
-        print(self.n_loops)
 
     def import_loops(self, loops, fs, limit):
         """
@@ -51,10 +50,15 @@ class LoopStormGUI(QMainWindow):
         """
         current_file_loops = []
         directory = 'loops'
+
+        if '.DS_Store' in os.listdir(directory): # Possible bug caused by MacOS
+            os.remove('loops/.DS_Store')
         # Filling an auxiliary list with all the loops in the loops file
         for filename in sorted(os.listdir(directory)):
             arg = directory + "/" + filename
             loop, fs = sf.read(arg, always_2d=True)
+            if fs != 44100:
+                raise ValueError("Only .wav files with 44.1k sample rate accepted")
             current_file_loops.append(loop)
 
         # Checking if there are enough available slots
@@ -188,8 +192,6 @@ class LoopStormGUI(QMainWindow):
         for i in range(0,3):
             if os.path.exists("LoopPictures/LoopPic" + str(i) + ".png"):
                 os.remove("LoopPictures/LoopPic" + str(i) + ".png")
-
-
 
 
 if __name__ == "__main__":
