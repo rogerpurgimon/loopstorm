@@ -234,6 +234,9 @@ border-radius: 25px;
       <height>40</height>
      </rect>
     </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
     <property name="text">
      <string>Master Loop</string>
     </property>
@@ -256,6 +259,9 @@ border-radius: 25px;
       <height>40</height>
      </rect>
     </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
     <property name="text">
      <string>Loop 1</string>
     </property>
@@ -274,6 +280,9 @@ border-radius: 25px;
       <width>520</width>
       <height>40</height>
      </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
     </property>
     <property name="text">
      <string>Loop 2</string>

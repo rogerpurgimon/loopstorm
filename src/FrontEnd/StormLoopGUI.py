@@ -7,33 +7,29 @@ from PyQt5 import uic, QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow, QApplication
 
 import threading
+import atexit
 import sounddevice as sd
 import soundfile as sf
 
-#import essentia
-#from essentia.standard import *
-
-#from AudioManager import AudioManager
+# import essentia
+# from essentia.standard import *
+# from AudioManager import AudioManager
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-# A venv was created in the file env in the leonardbalm file,
-# this is where the pip and the python3 is located
-
-
 class LoopStormGUI(QMainWindow):
-
-    loops = []
+    loops = [[],[],[]]
+    nloops = 0 #number of loops currently in the program
     fs = 44100
     selected_loop = 0
     current_frame = 0
-    
+
     def __init__(self):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
-        #self.loops = AudioManager()
-        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 4))
+        # self.loops = AudioManager()
+        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 3))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -42,6 +38,7 @@ class LoopStormGUI(QMainWindow):
         self.leftArrow.clicked.connect(lambda: self.arrow("left"))
         self.rightArrow.clicked.connect(lambda: self.arrow("right"))
         self.playButton.clicked.connect(lambda: self.play_button())
+        atexit.register(self.exit_handler)
 
     def import_loops(self, loops, fs, limit):
         """
@@ -51,23 +48,24 @@ class LoopStormGUI(QMainWindow):
         3. If not enough slots pop-up window with a warning and import amount of loops possible.
         """
         current_file_loops = []
-        #sampling_rates = []
         directory = 'loops'
 
         # Filling an auxiliary list with all the loops in the loops file
         for filename in os.listdir(directory):
             arg = directory + "/" + filename
             loop, fs = sf.read(arg, always_2d=True)
-            #loop = MonoLoader(filename=arg)
             current_file_loops.append(loop)
-            #sampling_rates.append(fs)
 
         # Checking if there are enough available slots
-        if len(loops) + len(current_file_loops) > limit:
-            raise ValueError("Not enough slots available! Remove some loops from LoopStorm or from the loops folder.")
+        if (self.nloops + len(current_file_loops)) > limit:
+            raise ValueError("Only " + str(limit - self.nloops) + " loop slot(s) available. Modify the loops folder.")
         else:
-            self.loops = current_file_loops
-            #self.fs = sampling_rates
+            for loop in current_file_loops:
+                for i in range(0,3):
+                    if not np.any(self.loops[i]):
+                        self.loops[i] = loop
+                        break
+            self.nloops += len(current_file_loops)
             print("Loops imported.")
 
         self.represent_loops()
@@ -77,17 +75,31 @@ class LoopStormGUI(QMainWindow):
         Visually represents the loops imported.
         Return void.
         """
-
         i = 0
         for loop in self.loops:
-            self.generate_image(loop, i)
+            if np.any(loop):
+                self.generate_image(loop, i)
             i += 1
 
-        self.loop0.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic0.png"))
-        self.loop1.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic1.png"))
-        self.loop2.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic2.png"))
+        if os.path.exists("LoopPictures/LoopPic0.png"):
+            print("exists0")
+            self.loop0.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic0.png"))
+        else:
+            self.loop0.setPixmap(QtGui.QPixmap(""))
+            self.loop0.setText("Master Loop")
+        if os.path.exists("LoopPictures/LoopPic1.png"):
+            print("exists1")
+            self.loop1.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic1.png"))
+        else:
+            self.loop1.setPixmap(QtGui.QPixmap(""))
+            self.loop1.setText("Loop 1")
+        if os.path.exists("LoopPictures/LoopPic2.png"):
+            print("exists2")
+            self.loop2.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic2.png"))
+        else:
+            self.loop2.setPixmap(QtGui.QPixmap(""))
+            self.loop2.setText("Loop 2")
 
-    
     def generate_image(self, loop, i):
         """
         Generates loop pictures.
@@ -108,23 +120,25 @@ class LoopStormGUI(QMainWindow):
         1. Check if a loop is selected.
         2. Erase loop data from the loops list somewhere.
         """
-        self.loops.pop(self.selected_loop)
-        
+        self.loops[self.selected_loop] = []
+        self.nloops -= 1
+
+        os.remove("LoopPictures/LoopPic" + str(self.selected_loop) + ".png")
+
+        self.represent_loops()
 
     def export_master(self):
         """
-        1. Check if a loop is selected.
-        2. Erase loop data from the loops list somewhere.
+        Exports the current master loop.
+        If done more than once replaces previously exported master loops. Edit Exports file to export more than once.
         """
+        sf.write('Exports/MasterLoop.wav', self.loops[0], self.fs)
 
     def select_loop(self, number):
         """
-        1. Check if a loop is selected.
-        2. Erase loop data from the loops list somewhere.
         """
         self.selected_loop = number
-        print("loop", self.selected_loop, "selected")
-        
+        print("Loop", self.selected_loop, "selected")
 
     def arrow(self, direction):
         """
@@ -138,32 +152,39 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         event = threading.Event()
-        #data, fs = sf.read(self.loops[0], always_2d=True)
-        #current_frame = 0
-        
-        #we always assume the main loop is the main in loops[0]
+        # data, fs = sf.read(self.loops[0], always_2d=True)
+        # current_frame = 0
+
+        # we always assume the main loop is the main in loops[0]
         data = self.loops[self.selected_loop]
         fs = self.fs
-        
+
         def callback(outdata, frames, time, status):
-            #global current_frame 	
+            # global current_frame
             if status:
                 print(status)
             chunksize = min(len(data) - self.current_frame, frames)
             outdata[:chunksize] = data[self.current_frame:self.current_frame + chunksize]
             if chunksize < frames:
                 outdata[chunksize:] = 0
-                self.current_frame = 0            		
-		#raise sd.CallbackStop()
+                self.current_frame = 0
+            # raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
 
         stream = sd.OutputStream(
             samplerate=fs, channels=data.shape[1],
             callback=callback, finished_callback=event.set)
-	
+
         with stream:
             event.wait()  # Wait until playback is finished
+
+    def exit_handler(self):
+        for i in range(0,3):
+            if os.path.exists("LoopPictures/LoopPic" + str(i) + ".png"):
+                os.remove("LoopPictures/LoopPic" + str(i) + ".png")
+
+
 
 
 if __name__ == "__main__":
