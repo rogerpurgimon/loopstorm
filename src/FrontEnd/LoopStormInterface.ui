@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>753</width>
+    <width>752</width>
     <height>517</height>
    </rect>
   </property>
@@ -34,7 +34,7 @@
     <property name="geometry">
      <rect>
       <x>80</x>
-      <y>90</y>
+      <y>85</y>
       <width>121</width>
       <height>41</height>
      </rect>
@@ -59,9 +59,9 @@
    <widget class="QPushButton" name="replace">
     <property name="geometry">
      <rect>
-      <x>530</x>
-      <y>360</y>
-      <width>114</width>
+      <x>294</x>
+      <y>335</y>
+      <width>160</width>
       <height>41</height>
      </rect>
     </property>
@@ -111,9 +111,9 @@
    <widget class="QPushButton" name="pushButton_8">
     <property name="geometry">
      <rect>
-      <x>63</x>
-      <y>360</y>
-      <width>131</width>
+      <x>60</x>
+      <y>385</y>
+      <width>140</width>
       <height>41</height>
      </rect>
     </property>
@@ -124,9 +124,9 @@
    <widget class="QPushButton" name="leftArrow">
     <property name="geometry">
      <rect>
-      <x>210</x>
-      <y>360</y>
-      <width>61</width>
+      <x>60</x>
+      <y>335</y>
+      <width>60</width>
       <height>41</height>
      </rect>
     </property>
@@ -137,9 +137,9 @@
    <widget class="QPushButton" name="rightArrow">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>360</y>
-      <width>61</width>
+      <x>140</x>
+      <y>335</y>
+      <width>60</width>
       <height>41</height>
      </rect>
     </property>
@@ -150,8 +150,8 @@
    <widget class="QDial" name="sensKnob1">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>150</y>
+      <x>680</x>
+      <y>155</y>
       <width>31</width>
       <height>41</height>
      </rect>
@@ -160,8 +160,8 @@
    <widget class="QDial" name="sensKnob2">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>205</y>
+      <x>680</x>
+      <y>210</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -170,8 +170,8 @@
    <widget class="QDial" name="sensKnob3">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>255</y>
+      <x>680</x>
+      <y>260</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -180,7 +180,7 @@
    <widget class="QSlider" name="horizontalSlider">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>132</x>
       <y>450</y>
       <width>541</width>
       <height>25</height>
@@ -206,9 +206,9 @@
    <widget class="QPushButton" name="pushButton_12">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>306</x>
       <y>50</y>
-      <width>141</width>
+      <width>140</width>
       <height>51</height>
      </rect>
     </property>
@@ -228,9 +228,9 @@ border-radius: 25px;
    <widget class="QLabel" name="loop0">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>132</x>
       <y>150</y>
-      <width>520</width>
+      <width>541</width>
       <height>40</height>
      </rect>
     </property>
@@ -253,9 +253,9 @@ border-radius: 25px;
     </property>
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>132</x>
       <y>200</y>
-      <width>520</width>
+      <width>541</width>
       <height>40</height>
      </rect>
     </property>
@@ -275,9 +275,9 @@ border-radius: 25px;
    <widget class="QLabel" name="loop2">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>132</x>
       <y>250</y>
-      <width>520</width>
+      <width>541</width>
       <height>40</height>
      </rect>
     </property>
@@ -297,9 +297,9 @@ border-radius: 25px;
    <widget class="QLabel" name="sliceText">
     <property name="geometry">
      <rect>
-      <x>213</x>
-      <y>330</y>
-      <width>131</width>
+      <x>64</x>
+      <y>307</y>
+      <width>130</width>
       <height>20</height>
      </rect>
     </property>
@@ -314,6 +314,80 @@ border-radius: 25px;
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_9">
+    <property name="geometry">
+     <rect>
+      <x>533</x>
+      <y>385</y>
+      <width>140</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reproduce Slice</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="rightArrow_2">
+    <property name="geometry">
+     <rect>
+      <x>613</x>
+      <y>335</y>
+      <width>60</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="sliceText_2">
+    <property name="geometry">
+     <rect>
+      <x>537</x>
+      <y>307</y>
+      <width>130</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Gill Sans</family>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Slave Slice Selector</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="leftArrow_2">
+    <property name="geometry">
+     <rect>
+      <x>533</x>
+      <y>335</y>
+      <width>60</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="putBack">
+    <property name="geometry">
+     <rect>
+      <x>294</x>
+      <y>385</y>
+      <width>160</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Put Back</string>
     </property>
    </widget>
   </widget>

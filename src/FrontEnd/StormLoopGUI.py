@@ -110,12 +110,13 @@ class LoopStormGUI(QMainWindow):
         """
         time = np.linspace(0, len(loop) / self.fs, num=len(loop))
 
-        plt.figure(1)
+        plt.figure(i)
         plt.figure(figsize=(15, 2))
         plt.xlim([0, len(loop) / self.fs])
         plt.ylim([-1, 1])
         plt.axis('off')
         plt.plot(time, loop)
+        plt.axvline(x=2, color='black')
         plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')
 
     def remove_loop(self):
