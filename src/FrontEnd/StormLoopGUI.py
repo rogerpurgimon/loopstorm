@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 class LoopStormGUI(QMainWindow):
     loops = [[],[],[]]
-    nloops = 0 #number of loops currently in the program
+    n_loops = 0 #number of loops currently in the program
     fs = 44100
     selected_loop = 0
     current_frame = 0
@@ -30,7 +30,6 @@ class LoopStormGUI(QMainWindow):
         uic.loadUi("LoopStormInterface.ui", self)
         self.setWindowTitle("Loopstorm")
         self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 3))
-        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 4))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -41,6 +40,7 @@ class LoopStormGUI(QMainWindow):
         self.playButton.setCheckable(True)
         self.playButton.clicked.connect(lambda: self.play_button())
         atexit.register(self.exit_handler)
+        print(self.n_loops)
 
     def import_loops(self, loops, fs, limit):
         """
@@ -51,23 +51,22 @@ class LoopStormGUI(QMainWindow):
         """
         current_file_loops = []
         directory = 'loops'
-
         # Filling an auxiliary list with all the loops in the loops file
-        for filename in os.listdir(directory):
+        for filename in sorted(os.listdir(directory)):
             arg = directory + "/" + filename
             loop, fs = sf.read(arg, always_2d=True)
             current_file_loops.append(loop)
 
         # Checking if there are enough available slots
-        if (self.nloops + len(current_file_loops)) > limit:
-            raise ValueError("Only " + str(limit - self.nloops) + " loop slot(s) available. Modify the loops folder.")
+        if (self.n_loops + len(current_file_loops)) > limit:
+            raise ValueError("Only " + str(limit - self.n_loops) + " loop slot(s) available. Modify the loops folder.")
         else:
             for loop in current_file_loops:
                 for i in range(0,3):
                     if not np.any(self.loops[i]):
                         self.loops[i] = loop
                         break
-            self.nloops += len(current_file_loops)
+            self.n_loops += len(current_file_loops)
             print("Loops imported.")
 
         self.represent_loops()
@@ -83,20 +82,18 @@ class LoopStormGUI(QMainWindow):
                 self.generate_image(loop, i)
             i += 1
 
+        print("represent")
         if os.path.exists("LoopPictures/LoopPic0.png"):
-            print("exists0")
             self.loop0.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic0.png"))
         else:
             self.loop0.setPixmap(QtGui.QPixmap(""))
             self.loop0.setText("Master Loop")
         if os.path.exists("LoopPictures/LoopPic1.png"):
-            print("exists1")
             self.loop1.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic1.png"))
         else:
             self.loop1.setPixmap(QtGui.QPixmap(""))
             self.loop1.setText("Loop 1")
         if os.path.exists("LoopPictures/LoopPic2.png"):
-            print("exists2")
             self.loop2.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic2.png"))
         else:
             self.loop2.setPixmap(QtGui.QPixmap(""))
@@ -123,10 +120,9 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         self.loops[self.selected_loop] = []
-        self.nloops -= 1
+        self.n_loops -= 1
 
         os.remove("LoopPictures/LoopPic" + str(self.selected_loop) + ".png")
-
         self.represent_loops()
 
     def export_master(self):
