@@ -4,115 +4,60 @@ from scipy.spatial import distance
 from AudioExtractor import AudioExtractor
 
 class AudioManager:
+    d = {}
+    d['loop0'] = {}
+    d['loop1'] = {}
+    d['loop2'] = {}
 
-    def __init__(self):
-        self.d = {}
-        self.d['main_loop'] = {}
-        self.d['main_loop']['slices'] = {}
+    d['loop0']['loop'] = []
+    d['loop1']['loop'] = []
+    d['loop2']['loop'] = []
 
-        self.d['slave_loop1'] = {}
-        self.d['slave_loop2'] = {}
-        self.d['slave_loop3'] = {}
-        self.d['slave_loop1']['slices'] = {}
-        self.d['slave_loop2']['slices'] = {}
-        self.d['slave_loop3']['slices'] = {}
+    d['loop0']['stamps'] = []
+    d['loop1']['stamps'] = []
+    d['loop2']['stamps'] = []
+
+    d['loop0']['slices'] = [[],[]]
+    d['loop1']['slices'] = [[],[]]
+    d['loop2']['slices'] = [[],[]]
+
+
+    def __init__(self, loops):
+        for i in range(3):
+            self.d['loop'+str(i)]['loop'] = loops[i]
+            self.add_onsets(loops[i],i)
+            self.add_slice(loops[i],i)
+            self.add_mfccs(loops[i],i)
 
     def __call__(self):
         print(self.d)
+
+    def add_onsets(self, loop, slave_idx):
+        extractor_loop = AudioExtractor(loop)
+        onsets_hfc = extractor_loop.get_onsets()
+
+        for i in range(3):
+           self.d['loop'+str(i)]['stamps'] = onsets_hfc[1]
 
     def add_slice(self,loop,slave_idx):
         extractor_loop = AudioExtractor(loop)
         onsets_hfc = extractor_loop.get_onsets()
         extractor_loop.get_slices(onsets_hfc)
 
-        for nslice in range(len(extractor_loop.chopList)):
-            if slave_idx==1:
-                self.d['slave_loop1']['slices'][nslice] = {}
-                self.d['slave_loop1']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
-
-            if slave_idx==2:
-                self.d['slave_loop2']['slices'][nslice] = {}
-                self.d['slave_loop2']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
-
-            if slave_idx==3:
-                self.d['slave_loop3']['slices'][nslice] = {}
-                self.d['slave_loop3']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
-
-            if slave_idx==0:
-                self.d['main_loop']['slices'][nslice] = {}
-                self.d['main_loop']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
+        for i in range(3):
+            self.d['loop'+ str(i)]['slices'][0] = extractor_loop.chopList
 
     def add_mfccs(self,loop,slave_idx):
 
         extractor_loop = AudioExtractor(loop)
+        for i in range(3):
+            for nslice in range(len(self.d['loop'+ str(i)]['slices'][0])):
+                extractor_loop.extract_mfcc(self.d['loop'+ str(i)]['slices'][0][nslice])
+                self.d['loop'+ str(i)]['slices'][1].append(extractor_loop.mfccs[nslice])
 
-        if slave_idx==1:
-
-            for nslice in range(len(self.d['slave_loop1']['slices'])):
-                extractor_loop.extract_mfcc(self.d['slave_loop1']['slices'][nslice]['info'])
-                self.d['slave_loop1']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
-
-
-        if slave_idx==2:
-            for nslice in range(len(self.d['slave_loop2']['slices'])):
-                extractor_loop.extract_mfcc(self.d['slave_loop2']['slices'][nslice]['info'])
-                self.d['slave_loop2']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
-
-        if slave_idx==3:
-            for nslice in range(len(self.d['slave_loop3']['slices'])):
-                extractor_loop.extract_mfcc(self.d['slave_loop3']['slices'][nslice]['info'])
-                self.d['slave_loop3']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
-
-        if slave_idx==0:
-            for nslice in range(len(self.d['main_loop']['slices'])):
-                extractor_loop.extract_mfcc(self.d['main_loop']['slices'][nslice]['info'])
-                self.d['main_loop']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
-
-
-    def similarity(self):
-
-        for n in range(len(self.d['main_loop']['slices'])):
-            min_dist = np.inf
-            max_dist = 0
-            idx = []
-
-            #check the distances n slice --> to all slices in the slave loops
-            for i in range(len(self.d['slave_loop1']['slices'])):
-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop1']['slices'][i]['mfccs'])
-
-                if new_dist > max_dist:
-                    max_dist = new_dist
-
-                if new_dist < min_dist:
-                    min_dist = new_dist
-                    #fisrt argument reference the slave loop and the second referene the index
-                    idx = ['slave_loop1',i,min_dist/max_dist]
-
-
-            for j in range(len(self.d['slave_loop2']['slices'])):
-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop2']['slices'][j]['mfccs'])
-
-                if new_dist > max_dist:
-                    max_dist = new_dist
-
-                if new_dist < min_dist:
-                    min_dist = new_dist
-                    idx = ['slave_loop2',j,min_dist/max_dist]
-
-            for k in range(len(self.d['slave_loop3']['slices'])):
-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop3']['slices'][k]['mfccs'])
-
-                if new_dist > max_dist:
-                    max_dist = new_dist
-
-                if new_dist < min_dist:
-                    min_dist = new_dist
-                    idx = ['slave_loop3',k,min_dist/max_dist]
-
-
-            #once we obtain the shortest distance we add the information to the dicctionary
-
-            self.d['main_loop']['slices'][n]['similarity'] = idx
+    def similarity(self, mfcc1, mfcc2):
+        dist = distance.euclidean(mfcc1, mfcc2)
+        return dist
 
 
 
