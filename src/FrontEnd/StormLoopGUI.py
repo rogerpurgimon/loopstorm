@@ -11,9 +11,9 @@ import atexit
 import sounddevice as sd
 import soundfile as sf
 
-# import essentia
-# from essentia.standard import *
-# from AudioManager import AudioManager
+import essentia
+from essentia.standard import *
+from AudioManager import AudioManager
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +24,7 @@ class LoopStormGUI(QMainWindow):
     fs = 44100
     selected_loop = 0
     current_frame = 0
+    
 
     def __init__(self):
         super().__init__()
@@ -172,7 +173,8 @@ class LoopStormGUI(QMainWindow):
                 outdata[chunksize:] = 0
                 self.current_frame = 0
             elif self.playButton.isChecked() == False:
-                outdata[chunksize:] = 0
+                #outdata[chunksize:] = 0
+                #self.current_frame = 0
                 raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
@@ -182,13 +184,12 @@ class LoopStormGUI(QMainWindow):
                 callback=callback, finished_callback=event.set)
 
         if self.playButton.isChecked():
-            print("estem dins")
-            with stream:
-                event.wait()  # Wait until playback is finished   """
+            stream.start()
+            event.wait(timeout=1)
         else:
-
-            print("estem fora")
-
+            stream.stop()        
+            
+            
     def exit_handler(self):
         for i in range(0,3):
             if os.path.exists("LoopPictures/LoopPic" + str(i) + ".png"):
