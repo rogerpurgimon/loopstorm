@@ -57,7 +57,9 @@ class LoopStormGUI(QMainWindow):
         # Filling an auxiliary list with all the loops in the loops file
         for filename in sorted(os.listdir(directory)):
             arg = directory + "/" + filename
-            loop, fs = sf.read(arg, always_2d=True)
+            loop, fs = sf.read(arg, always_2d=False)
+            #fs = self.fs
+            #loop = MonoLoader(filename=arg)()
             if fs != 44100:
                 raise ValueError("Only .wav files with 44.1k sample rate accepted")
             current_file_loops.append(loop)
@@ -71,17 +73,28 @@ class LoopStormGUI(QMainWindow):
                     if not np.any(self.loops[i]):
                         self.loops[i] = loop
                         break
-
+        
 
             self.n_loops += len(current_file_loops)
             print("Loops imported.")
-
-
-        self.data = AudioManager(self.loops)
+            print(self.loops[0])
+        
+        #convert to only one shape
+        array_loops = [self.loops[0].sum(axis=1), self.loops[1].sum(axis=1), self.loops[2].sum(axis=1)]
+        
+        """self.data = {}
+        for i in range(0,3):
+            self.data[i] = AudioManager(self.loops[i]).d"""
+        
+        """array_loops = [self.loops[0][:][:], self.loops[1][:][:], self.loops[2][:][:]]  
+        print("nova array:", array_loops)  """
+        self.data = AudioManager(array_loops).d
+        
+                        
         self.n_loops += len(current_file_loops)
         print("Loops imported.")
-
-        #self.represent_loops()
+        
+        self.represent_loops()
 
     def represent_loops(self):
         """
@@ -125,7 +138,7 @@ class LoopStormGUI(QMainWindow):
         plt.axis('off')
         plt.plot(time, loop)
         #Draws the vertical lines
-        for j in self.data.d['loop'+str(i)]['stamps']:
+        for j in self.data['loop'+str(i)]['stamps']:
             plt.axvline(x=j, color='black')
 
         plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')
@@ -171,6 +184,8 @@ class LoopStormGUI(QMainWindow):
 
         # we always assume the main loop is the main in loops[0]
         data = self.loops[self.selected_loop]
+        #i = self.selected_loop
+        #data = self.data['loop'+str(i)]['loop']
         fs = self.fs
 
         def callback(outdata, frames, time, status):

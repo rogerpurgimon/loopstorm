@@ -39,10 +39,9 @@ else:
             if not np.any(loops[i]):
                 loops[i] = loop
                 break
-print("loop0: ", loops[0])  
-print("loop1: ", loops[1])  
-print("loop2: ", loops[2])                
-data = AudioManager(loops)
+  
+print(loops[0].sum(axis=1))
+
 n_loops += len(current_file_loops)
 print("Loops imported.")
 
