@@ -30,7 +30,7 @@ class LoopStormGUI(QMainWindow):
         super().__init__()
         uic.loadUi("LoopStormInterface.ui", self)
         self.setWindowTitle("Loopstorm")
-        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 3))
+        self.importLoops.clicked.connect(lambda: self.import_loops(3))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -42,10 +42,10 @@ class LoopStormGUI(QMainWindow):
         self.playButton.setCheckable(True)
         atexit.register(self.exit_handler)
 
-    def import_loops(self, loops, fs, limit):
+    def import_loops(self, limit):
         """
         Loops only come from the loops folder. Modify that folder if we want to use different loops.
-        1. Check amount of loop slots available (this should be represented in a list somewhere)
+        1. Check amount of loop slots available (this should be represented in a list 	   somewhere)
         2. Check amount of loops to import in the loops folder.
         3. If not enough slots pop-up window with a warning and import amount of loops possible.
         """
@@ -61,7 +61,7 @@ class LoopStormGUI(QMainWindow):
             if fs != 44100:
                 raise ValueError("Only .wav files with 44.1k sample rate accepted")
             current_file_loops.append(loop)
-
+        
         # Checking if there are enough available slots
         if (self.n_loops + len(current_file_loops)) > limit:
             raise ValueError("Only " + str(limit - self.n_loops) + " loop slot(s) available. Modify the loops folder.")
@@ -72,10 +72,16 @@ class LoopStormGUI(QMainWindow):
                         self.loops[i] = loop
                         break
 
+
             self.n_loops += len(current_file_loops)
             print("Loops imported.")
 
-        self.represent_loops()
+
+        self.data = AudioManager(self.loops)
+        self.n_loops += len(current_file_loops)
+        print("Loops imported.")
+
+        #self.represent_loops()
 
     def represent_loops(self):
         """
@@ -107,7 +113,7 @@ class LoopStormGUI(QMainWindow):
 
     def generate_image(self, loop, i):
         """
-        Generates loop pictures.
+        Generates loop pictures with indicated transients and similarities, depending on the 	 selected master loop slice.
         Return none.
         """
         time = np.linspace(0, len(loop) / self.fs, num=len(loop))
@@ -118,9 +124,12 @@ class LoopStormGUI(QMainWindow):
         plt.ylim([-1, 1])
         plt.axis('off')
         plt.plot(time, loop)
-        plt.axvline(x=2, color='black')
-        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')
+        #Draws the vertical lines
+        for j in self.data.d['loop'+str(i)]['stamps']:
+            plt.axvline(x=j, color='black')
 
+        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')
+        
     def remove_loop(self):
         """
         1. Check if a loop is selected.
