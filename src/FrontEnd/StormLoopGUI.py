@@ -71,6 +71,7 @@ class LoopStormGUI(QMainWindow):
                     if not np.any(self.loops[i]):
                         self.loops[i] = loop
                         break
+
             self.n_loops += len(current_file_loops)
             print("Loops imported.")
 
@@ -156,15 +157,15 @@ class LoopStormGUI(QMainWindow):
         2. Erase loop data from the loops list somewhere.
         """
         event = threading.Event()
-        #data, fs = sf.read(self.loops[0], always_2d=True)
-        #current_frame = 0
-        
-        #we always assume the main loop is the main in loops[0]
+        # data, fs = sf.read(self.loops[0], always_2d=True)
+        # current_frame = 0
+
+        # we always assume the main loop is the main in loops[0]
         data = self.loops[self.selected_loop]
         fs = self.fs
-        
+
         def callback(outdata, frames, time, status):
-            #global current_frame 	
+            # global current_frame
             if status:
                 print(status)
             chunksize = min(len(data) - self.current_frame, frames)
@@ -173,23 +174,23 @@ class LoopStormGUI(QMainWindow):
                 outdata[chunksize:] = 0
                 self.current_frame = 0
             elif self.playButton.isChecked() == False:
-                #outdata[chunksize:] = 0
-                #self.current_frame = 0
+                # outdata[chunksize:] = 0
+                # self.current_frame = 0
                 raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
 
         stream = sd.OutputStream(
-                samplerate=fs, channels=data.shape[1],
-                callback=callback, finished_callback=event.set)
+            samplerate=fs, channels=data.shape[1],
+            callback=callback, finished_callback=event.set)
 
         if self.playButton.isChecked():
             stream.start()
             event.wait(timeout=1)
         else:
-            stream.stop()        
-            
-            
+            stream.stop()
+
+
     def exit_handler(self):
         for i in range(0,3):
             if os.path.exists("LoopPictures/LoopPic" + str(i) + ".png"):

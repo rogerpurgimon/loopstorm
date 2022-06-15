@@ -50,5 +50,6 @@ class AudioExtractor:
             mfcc_bands, mfcc_coeffs = mfcc(spectrum(w(frame)))
             mfcc_sin.append(mfcc_coeffs)
         mfcc_sin = essentia.array(mfcc_sin).T
-        mfcc_sin = np.mean(mfcc_sin,axis=1)
+        #mfcc_sin = np.mean(mfcc_sin,axis=1) #mean for columns
+        mfcc_sin = np.concatenate(mfcc_sin, axis=0)
         self.mfccs.append(mfcc_sin)
