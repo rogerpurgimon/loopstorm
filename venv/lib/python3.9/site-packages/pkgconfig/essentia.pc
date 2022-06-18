@@ -1,0 +1,9 @@
+prefix=/Users/user/PycharmProjects/loopstorm/venv
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: libessentia
+Description: audio analysis library -- development files
+Version: 2.1-beta5
+Libs: -L${libdir} -lessentia -L/usr/local/Cellar/libyaml/0.2.5/lib -L/usr/local/Cellar/libsamplerate/0.1.9_1/lib -L/usr/local/Cellar/fftw/3.3.10/lib -L/usr/local/Cellar/taglib/1.12/lib -lfftw3f -lsamplerate -ltag -lz -lyaml
+Cflags: -I${includedir}/essentia -I${includedir}/essentia/scheduler -I${includedir}/essentia/streaming -I${includedir}/essentia/streaming/algorithms -I${includedir}/essentia/utils

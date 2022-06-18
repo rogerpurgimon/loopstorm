@@ -1,0 +1,3 @@
+#!/Users/user/PycharmProjects/loopstorm/venv/bin/python3.9
+from numba.pycc import main
+main()

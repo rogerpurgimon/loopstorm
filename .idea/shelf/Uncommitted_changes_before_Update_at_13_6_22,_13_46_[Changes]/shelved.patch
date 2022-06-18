@@ -1,0 +1,290 @@
+Index: src/test.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test.py b/src/FrontEnd/test.py
+rename from src/test.py
+rename to src/FrontEnd/test.py
+--- a/src/test.py	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
++++ b/src/FrontEnd/test.py	(date 1655111155852)
+@@ -61,7 +61,7 @@
+ 
+             manager.d['main_loop']['slices'][i]['info'] = manager.d[loop_label]['slices'][idx]['info']
+ 
+-    print(manager.d['main_loop']['slices'][0]['info'])
++    print(manager.d)
+ 
+     #######################################################################################
+ 
+Index: src/FrontEnd/StormLoopGUI.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#!/usr/bin/python3\n# -*- encoding: latin-1 -*-\n\nimport os\nimport sys\nfrom PyQt5 import uic, QtCore, QtGui, QtWidgets\nfrom PyQt5.QtWidgets import QMainWindow, QApplication\n\nimport threading\nimport atexit\nimport sounddevice as sd\nimport soundfile as sf\n\n# import essentia\n# from essentia.standard import *\n# from AudioManager import AudioManager\n\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nclass LoopStormGUI(QMainWindow):\n    loops = [[],[],[]]\n    n_loops = 0 #number of loops currently in the program\n    fs = 44100\n    selected_loop = 0\n    current_frame = 0\n\n    def __init__(self):\n        super().__init__()\n        uic.loadUi(\"LoopStormInterface.ui\", self)\n        self.setWindowTitle(\"Loopstorm\")\n        self.importLoops.clicked.connect(lambda: self.import_loops(self.loops, self.fs, 3))\n        self.deleteLoop.clicked.connect(lambda: self.remove_loop())\n        self.exportMaster.clicked.connect(lambda: self.export_master())\n        self.selectMaster.clicked.connect(lambda: self.select_loop(0))\n        self.selectLoop1.clicked.connect(lambda: self.select_loop(1))\n        self.selectLoop2.clicked.connect(lambda: self.select_loop(2))\n        self.leftArrow.clicked.connect(lambda: self.arrow(\"left\"))\n        self.rightArrow.clicked.connect(lambda: self.arrow(\"right\"))\n        self.playButton.clicked.connect(lambda: self.play_button())\n        self.playButton.setCheckable(True)\n        atexit.register(self.exit_handler)\n\n    def import_loops(self, loops, fs, limit):\n        \"\"\"\n        Loops only come from the loops folder. Modify that folder if we want to use different loops.\n        1. Check amount of loop slots available (this should be represented in a list somewhere)\n        2. Check amount of loops to import in the loops folder.\n        3. If not enough slots pop-up window with a warning and import amount of loops possible.\n        \"\"\"\n        current_file_loops = []\n        directory = 'loops'\n\n        if '.DS_Store' in os.listdir(directory): # Possible bug caused by MacOS\n            os.remove('loops/.DS_Store')\n        # Filling an auxiliary list with all the loops in the loops file\n        for filename in sorted(os.listdir(directory)):\n            arg = directory + \"/\" + filename\n            loop, fs = sf.read(arg, always_2d=True)\n            if fs != 44100:\n                raise ValueError(\"Only .wav files with 44.1k sample rate accepted\")\n            current_file_loops.append(loop)\n\n        # Checking if there are enough available slots\n        if (self.n_loops + len(current_file_loops)) > limit:\n            raise ValueError(\"Only \" + str(limit - self.n_loops) + \" loop slot(s) available. Modify the loops folder.\")\n        else:\n            for loop in current_file_loops:\n                for i in range(0,3):\n                    if not np.any(self.loops[i]):\n                        self.loops[i] = loop\n                        break\n            self.n_loops += len(current_file_loops)\n            print(\"Loops imported.\")\n\n        self.represent_loops()\n\n    def represent_loops(self):\n        \"\"\"\n        Visually represents the loops imported.\n        Return void.\n        \"\"\"\n        i = 0\n        for loop in self.loops:\n            if np.any(loop):\n                self.generate_image(loop, i)\n            i += 1\n\n        print(\"represent\")\n        if os.path.exists(\"LoopPictures/LoopPic0.png\"):\n            self.loop0.setPixmap(QtGui.QPixmap(\"LoopPictures/LoopPic0.png\"))\n        else:\n            self.loop0.setPixmap(QtGui.QPixmap(\"\"))\n            self.loop0.setText(\"Master Loop\")\n        if os.path.exists(\"LoopPictures/LoopPic1.png\"):\n            self.loop1.setPixmap(QtGui.QPixmap(\"LoopPictures/LoopPic1.png\"))\n        else:\n            self.loop1.setPixmap(QtGui.QPixmap(\"\"))\n            self.loop1.setText(\"Loop 1\")\n        if os.path.exists(\"LoopPictures/LoopPic2.png\"):\n            self.loop2.setPixmap(QtGui.QPixmap(\"LoopPictures/LoopPic2.png\"))\n        else:\n            self.loop2.setPixmap(QtGui.QPixmap(\"\"))\n            self.loop2.setText(\"Loop 2\")\n\n    def generate_image(self, loop, i):\n        \"\"\"\n        Generates loop pictures.\n        Return none.\n        \"\"\"\n        time = np.linspace(0, len(loop) / self.fs, num=len(loop))\n\n        plt.figure(i)\n        plt.figure(figsize=(15, 2))\n        plt.xlim([0, len(loop) / self.fs])\n        plt.ylim([-1, 1])\n        plt.axis('off')\n        plt.plot(time, loop)\n        plt.axvline(x=2, color='black')\n        plt.savefig('LoopPictures/LoopPic' + str(i) + '.png', bbox_inches='tight')\n\n    def remove_loop(self):\n        \"\"\"\n        1. Check if a loop is selected.\n        2. Erase loop data from the loops list somewhere.\n        \"\"\"\n        self.loops[self.selected_loop] = []\n        self.n_loops -= 1\n\n        os.remove(\"LoopPictures/LoopPic\" + str(self.selected_loop) + \".png\")\n        self.represent_loops()\n\n    def export_master(self):\n        \"\"\"\n        Exports the current master loop.\n        If done more than once replaces previously exported master loops. Edit Exports file to export more than once.\n        \"\"\"\n        sf.write('Exports/MasterLoop.wav', self.loops[0], self.fs)\n\n    def select_loop(self, number):\n        \"\"\"\n        \"\"\"\n        self.selected_loop = number\n        print(\"Loop\", self.selected_loop, \"selected\")\n\n    def arrow(self, direction):\n        \"\"\"\n        1. Check if a loop is selected.\n        2. Erase loop data from the loops list somewhere.\n        \"\"\"\n\n    def play_button(self):\n        \"\"\"\n        1. Check if a loop is selected.\n        2. Erase loop data from the loops list somewhere.\n        \"\"\"\n        event = threading.Event()\n        #data, fs = sf.read(self.loops[0], always_2d=True)\n        #current_frame = 0\n        \n        #we always assume the main loop is the main in loops[0]\n        data = self.loops[self.selected_loop]\n        fs = self.fs\n        \n        def callback(outdata, frames, time, status):\n            #global current_frame \t\n            if status:\n                print(status)\n            chunksize = min(len(data) - self.current_frame, frames)\n            outdata[:chunksize] = data[self.current_frame:self.current_frame + chunksize]\n            if chunksize < frames:\n                outdata[chunksize:] = 0\n                self.current_frame = 0\n            elif self.playButton.isChecked() == False:\n                outdata[chunksize:] = 0\n                raise sd.CallbackStop()\n            else:\n                self.current_frame += chunksize\n\n        stream = sd.OutputStream(\n                samplerate=fs, channels=data.shape[1],\n                callback=callback, finished_callback=event.set)\n\n        if self.playButton.isChecked():\n            print(\"estem dins\")\n            with stream:\n                event.wait()  # Wait until playback is finished   \"\"\"\n        else:\n\n            print(\"estem fora\")\n\n    def exit_handler(self):\n        for i in range(0,3):\n            if os.path.exists(\"LoopPictures/LoopPic\" + str(i) + \".png\"):\n                os.remove(\"LoopPictures/LoopPic\" + str(i) + \".png\")\n\n\nif __name__ == \"__main__\":\n    app = QApplication(sys.argv)\n    GUI = LoopStormGUI()\n    GUI.show()\n    sys.exit(app.exec_())\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/src/FrontEnd/StormLoopGUI.py b/src/FrontEnd/StormLoopGUI.py
+--- a/src/FrontEnd/StormLoopGUI.py	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
++++ b/src/FrontEnd/StormLoopGUI.py	(date 1655120791675)
+@@ -13,7 +13,7 @@
+ 
+ # import essentia
+ # from essentia.standard import *
+-# from AudioManager import AudioManager
++#import AudioManager as am
+ 
+ import numpy as np
+ import matplotlib.pyplot as plt
+@@ -24,6 +24,7 @@
+     fs = 44100
+     selected_loop = 0
+     current_frame = 0
++    #loopSlices = am.AudioManager()
+ 
+     def __init__(self):
+         super().__init__()
+@@ -40,6 +41,7 @@
+         self.playButton.clicked.connect(lambda: self.play_button())
+         self.playButton.setCheckable(True)
+         atexit.register(self.exit_handler)
++        #am.AudioManager.add_slice()
+ 
+     def import_loops(self, loops, fs, limit):
+         """
+@@ -69,12 +71,17 @@
+                 for i in range(0,3):
+                     if not np.any(self.loops[i]):
+                         self.loops[i] = loop
++                        #self.loopSlices.add_slice(loop, i)
++                        #self.loopSlices.add_mfccs(loop, i)
+                         break
+             self.n_loops += len(current_file_loops)
+             print("Loops imported.")
+ 
+         self.represent_loops()
+ 
++    def fill_dict(self):
++        return
++
+     def represent_loops(self):
+         """
+         Visually represents the loops imported.
+@@ -105,7 +112,7 @@
+ 
+     def generate_image(self, loop, i):
+         """
+-        Generates loop pictures.
++        Generates loop pictures with indicated transients and similarities, depending on the selected master loop slice.
+         Return none.
+         """
+         time = np.linspace(0, len(loop) / self.fs, num=len(loop))
+Index: src/FrontEnd/AudioManager.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from essentia.standard import *\nimport numpy as np\nfrom scipy.spatial import distance\nfrom AudioExtractor import AudioExtractor\n\nclass AudioManager:\n\n    def __init__(self):\n        self.d = {}\n        self.d['main_loop'] = {}\n        self.d['main_loop']['slices'] = {}\n\n        self.d['slave_loop1'] = {}\n        self.d['slave_loop2'] = {}\n        self.d['slave_loop3'] = {}\n        self.d['slave_loop1']['slices'] = {}\n        self.d['slave_loop2']['slices'] = {}\n        self.d['slave_loop3']['slices'] = {}\n\n    def __call__(self):\n        print(self.d)\n\n    def add_slice(self,loop,slave_idx):\n        extractor_loop = AudioExtractor(loop)\n        onsets_hfc = extractor_loop.get_onsets()\n        extractor_loop.get_slices(onsets_hfc)\n\n        for nslice in range(len(extractor_loop.chopList)):\n            if slave_idx==1:\n                self.d['slave_loop1']['slices'][nslice] = {}\n                self.d['slave_loop1']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]\n\n            if slave_idx==2:\n                self.d['slave_loop2']['slices'][nslice] = {}\n                self.d['slave_loop2']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]\n\n            if slave_idx==3:\n                self.d['slave_loop3']['slices'][nslice] = {}\n                self.d['slave_loop3']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]\n\n            if slave_idx==0:\n                self.d['main_loop']['slices'][nslice] = {}\n                self.d['main_loop']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]\n\n    def add_mfccs(self,loop,slave_idx):\n\n        extractor_loop = AudioExtractor(loop)\n\n        if slave_idx==1:\n\n            for nslice in range(len(self.d['slave_loop1']['slices'])):\n                extractor_loop.extract_mfcc(self.d['slave_loop1']['slices'][nslice]['info'])\n                self.d['slave_loop1']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]\n\n\n        if slave_idx==2:\n            for nslice in range(len(self.d['slave_loop2']['slices'])):\n                extractor_loop.extract_mfcc(self.d['slave_loop2']['slices'][nslice]['info'])\n                self.d['slave_loop2']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]\n\n        if slave_idx==3:\n            for nslice in range(len(self.d['slave_loop3']['slices'])):\n                extractor_loop.extract_mfcc(self.d['slave_loop3']['slices'][nslice]['info'])\n                self.d['slave_loop3']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]\n\n        if slave_idx==0:\n            for nslice in range(len(self.d['main_loop']['slices'])):\n                extractor_loop.extract_mfcc(self.d['main_loop']['slices'][nslice]['info'])\n                self.d['main_loop']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]\n\n\n    def similarity(self):\n\n        for n in range(len(self.d['main_loop']['slices'])):\n            min_dist = np.inf\n            max_dist = 0\n            idx = []\n\n            #check the distances n slice --> to all slices in the slave loops\n            for i in range(len(self.d['slave_loop1']['slices'])):\n                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop1']['slices'][i]['mfccs'])\n\n                if new_dist > max_dist:\n                    max_dist = new_dist\n\n                if new_dist < min_dist:\n                    min_dist = new_dist\n                    #fisrt argument reference the slave loop and the second referene the index\n                    idx = ['slave_loop1',i,min_dist/max_dist]\n\n\n            for j in range(len(self.d['slave_loop2']['slices'])):\n                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop2']['slices'][j]['mfccs'])\n\n                if new_dist > max_dist:\n                    max_dist = new_dist\n\n                if new_dist < min_dist:\n                    min_dist = new_dist\n                    idx = ['slave_loop2',j,min_dist/max_dist]\n\n            for k in range(len(self.d['slave_loop3']['slices'])):\n                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop3']['slices'][k]['mfccs'])\n\n                if new_dist > max_dist:\n                    max_dist = new_dist\n\n                if new_dist < min_dist:\n                    min_dist = new_dist\n                    idx = ['slave_loop3',k,min_dist/max_dist]\n\n\n            #once we obtain the shortest distance we add the information to the dicctionary\n\n            self.d['main_loop']['slices'][n]['similarity'] = idx\n\n\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/FrontEnd/AudioManager.py b/src/FrontEnd/AudioManager.py
+--- a/src/FrontEnd/AudioManager.py	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
++++ b/src/FrontEnd/AudioManager.py	(date 1655062374140)
+@@ -1,7 +1,7 @@
+ from essentia.standard import *
+ import numpy as np
+ from scipy.spatial import distance
+-from AudioExtractor import AudioExtractor
++import AudioExtractor
+ 
+ class AudioManager:
+ 
+Index: src/AudioManager.py
+===================================================================
+diff --git a/src/AudioManager.py b/src/AudioManager.py
+deleted file mode 100644
+--- a/src/AudioManager.py	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
++++ /dev/null	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
+@@ -1,119 +0,0 @@
+-from essentia.standard import *
+-import numpy as np
+-from scipy.spatial import distance
+-from AudioExtractor import AudioExtractor
+-
+-class AudioManager:
+-
+-    def __init__(self):
+-        self.d = {}
+-        self.d['main_loop'] = {}
+-        self.d['main_loop']['slices'] = {}
+-
+-        self.d['slave_loop1'] = {}
+-        self.d['slave_loop2'] = {}
+-        self.d['slave_loop3'] = {}
+-        self.d['slave_loop1']['slices'] = {}
+-        self.d['slave_loop2']['slices'] = {}
+-        self.d['slave_loop3']['slices'] = {}
+-
+-    def __call__(self):
+-        print(self.d)
+-
+-    def add_slice(self,loop,slave_idx):
+-        extractor_loop = AudioExtractor(loop)
+-        onsets_hfc = extractor_loop.get_onsets()
+-        extractor_loop.get_slices(onsets_hfc)
+-
+-        for nslice in range(len(extractor_loop.chopList)):
+-            if slave_idx==1:
+-                self.d['slave_loop1']['slices'][nslice] = {}
+-                self.d['slave_loop1']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
+-
+-            if slave_idx==2:
+-                self.d['slave_loop2']['slices'][nslice] = {}
+-                self.d['slave_loop2']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
+-
+-            if slave_idx==3:
+-                self.d['slave_loop3']['slices'][nslice] = {}
+-                self.d['slave_loop3']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
+-
+-            if slave_idx==0:
+-                self.d['main_loop']['slices'][nslice] = {}
+-                self.d['main_loop']['slices'][nslice]['info'] = extractor_loop.chopList[nslice]
+-
+-    def add_mfccs(self,loop,slave_idx):
+-
+-        extractor_loop = AudioExtractor(loop)
+-
+-        if slave_idx==1:
+-
+-            for nslice in range(len(self.d['slave_loop1']['slices'])):
+-                extractor_loop.extract_mfcc(self.d['slave_loop1']['slices'][nslice]['info'])
+-                self.d['slave_loop1']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
+-
+-
+-        if slave_idx==2:
+-            for nslice in range(len(self.d['slave_loop2']['slices'])):
+-                extractor_loop.extract_mfcc(self.d['slave_loop2']['slices'][nslice]['info'])
+-                self.d['slave_loop2']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
+-
+-        if slave_idx==3:
+-            for nslice in range(len(self.d['slave_loop3']['slices'])):
+-                extractor_loop.extract_mfcc(self.d['slave_loop3']['slices'][nslice]['info'])
+-                self.d['slave_loop3']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
+-
+-        if slave_idx==0:
+-            for nslice in range(len(self.d['main_loop']['slices'])):
+-                extractor_loop.extract_mfcc(self.d['main_loop']['slices'][nslice]['info'])
+-                self.d['main_loop']['slices'][nslice]['mfccs'] = extractor_loop.mfccs[nslice]
+-
+-
+-    def similarity(self):
+-
+-        for n in range(len(self.d['main_loop']['slices'])):
+-            min_dist = np.inf
+-            max_dist = 0
+-            idx = []
+-
+-            #check the distances n slice --> to all slices in the slave loops
+-            for i in range(len(self.d['slave_loop1']['slices'])):
+-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop1']['slices'][i]['mfccs'])
+-
+-                if new_dist > max_dist:
+-                    max_dist = new_dist
+-
+-                if new_dist < min_dist:
+-                    min_dist = new_dist
+-                    #fisrt argument reference the slave loop and the second referene the index
+-                    idx = ['slave_loop1',i,min_dist/max_dist]
+-
+-
+-            for j in range(len(self.d['slave_loop2']['slices'])):
+-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop2']['slices'][j]['mfccs'])
+-
+-                if new_dist > max_dist:
+-                    max_dist = new_dist
+-
+-                if new_dist < min_dist:
+-                    min_dist = new_dist
+-                    idx = ['slave_loop2',j,min_dist/max_dist]
+-
+-            for k in range(len(self.d['slave_loop3']['slices'])):
+-                new_dist = distance.euclidean(self.d['main_loop']['slices'][n]['mfccs'], self.d['slave_loop3']['slices'][k]['mfccs'])
+-
+-                if new_dist > max_dist:
+-                    max_dist = new_dist
+-
+-                if new_dist < min_dist:
+-                    min_dist = new_dist
+-                    idx = ['slave_loop3',k,min_dist/max_dist]
+-
+-
+-            #once we obtain the shortest distance we add the information to the dicctionary
+-
+-            self.d['main_loop']['slices'][n]['similarity'] = idx
+-
+-
+-
+-
+Index: src/AudioExtractor.py
+===================================================================
+diff --git a/src/AudioExtractor.py b/src/AudioExtractor.py
+deleted file mode 100644
+--- a/src/AudioExtractor.py	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
++++ /dev/null	(revision 9543f6d1c0c3f205069b5ec6b4dfc1bd0b1ef4b2)
+@@ -1,54 +0,0 @@
+-import essentia
+-import numpy as np
+-from essentia.standard import *
+-
+-class AudioExtractor:
+-
+-    def __init__(self,loop):
+-        self.loop = loop
+-        self.chopList = []
+-        self.fs = 44100
+-        self.w_onset = 'hann'
+-        self.mfccs = []
+-        self.w_mfcc = 'blackmanharris62'
+-
+-    def __call__(self):
+-        return self.chopList
+-
+-    def get_onsets(self):
+-        od = OnsetDetection(method='hfc')
+-
+-        w = Windowing(type=self.w_onset)
+-        fft = FFT()  # this gives us a complex FFT
+-        c2p = CartesianToPolar()  # and this turns it into a pair (magnitude, phase)
+-        pool = essentia.Pool()
+-
+-        # Computing onset detection functions.
+-        for frame in FrameGenerator(self.loop, frameSize=1024, hopSize=512):
+-            mag, phase, = c2p(fft(w(frame)))
+-            pool.add('features.hfc', od(mag, phase))
+-
+-        onsets = Onsets()
+-        onsets_hfc_seconds = onsets(essentia.array([pool['features.hfc']]), [1])
+-
+-        onsets_hfc_samples = onsets_hfc_seconds * self.fs #retun
+-        return onsets_hfc_samples, onsets_hfc_seconds
+-
+-
+-    def get_slices(self,onsets_hfc):
+-        onsets_hfc = onsets_hfc[0]  # onset stamps in samples
+-        for onset in range(len(onsets_hfc) - 1):
+-            self.chopList.append(self.loop[int(onsets_hfc[onset]):int((onsets_hfc[onset + 1]))])
+-
+-
+-    def extract_mfcc(self,slice):
+-        w = Windowing(type=self.w_mfcc)
+-        spectrum = Spectrum()
+-        mfcc = MFCC()
+-        mfcc_sin = []
+-        for frame in FrameGenerator(slice, frameSize=2048, hopSize=1024):
+-            mfcc_bands, mfcc_coeffs = mfcc(spectrum(w(frame)))
+-            mfcc_sin.append(mfcc_coeffs)
+-        mfcc_sin = essentia.array(mfcc_sin).T
+-        mfcc_sin = np.mean(mfcc_sin,axis=1)
+-        self.mfccs.append(mfcc_sin)
+diff --git a/src/distance_test.py b/src/FrontEnd/distance_test.py
+rename from src/distance_test.py
+rename to src/FrontEnd/distance_test.py
