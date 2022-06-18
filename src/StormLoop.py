@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 
 
-class LoopStormGUI(QMainWindow):
+class LoopStorm(QMainWindow):
     stereo_loops = []
     d = {'loop0': {}, 'loop1': {}, 'loop2': {}}
 
@@ -321,6 +321,6 @@ class LoopStormGUI(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    GUI = LoopStormGUI()
+    GUI = LoopStorm()
     GUI.show()
     sys.exit(app.exec_())
