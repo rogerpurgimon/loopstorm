@@ -92,6 +92,8 @@ class LoopStorm(QMainWindow):
 
         # Computing slices mfcc similarities
         self.compute_similarities()
+        print(self.d['loop1']['similarity'])
+        print(self.d['loop2']['similarity'])
 
         # Generating the images
         for i in range(3):
@@ -158,7 +160,7 @@ class LoopStorm(QMainWindow):
         # Vertical lines
         for j in self.d['loop' + str(i)]['stamps']:
             plt.axvline(x=j, color='black')
-        plt.axvline(x=total_time, color='black') #last line
+        plt.axvline(x=total_time, color='black')  # last line
 
         # Horizontal lines
         minlim =self.d['loop' + str(i)]['stamps'][position] / total_time
@@ -178,16 +180,18 @@ class LoopStorm(QMainWindow):
         """
         Receives a similarity value and returns its correspondent color.
         """
-        if similarity>0 and similarity<0.2:
+        if similarity>=0 and similarity<0.2:
             return 'blue'
-        if similarity>0.2 and similarity<0.4:
+        elif similarity>0.2 and similarity<0.4:
             return 'yellow'
-        if similarity>0.4 and similarity<0.6:
+        elif similarity>0.4 and similarity<0.6:
             return 'green'
-        if similarity>0.6 and similarity<0.8:
+        elif similarity>0.6 and similarity<0.8:
             return 'pink'
-        if similarity>0.8 and similarity<1:
+        elif similarity>0.8 and similarity<=1:
             return 'red'
+        else:
+            return 'black'
 
     def represent_loops(self):
         """
