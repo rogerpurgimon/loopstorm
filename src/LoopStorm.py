@@ -101,8 +101,9 @@ class LoopStorm(QMainWindow):
         Computes similarities between the current master slice selected and all the slices from the slave loops.
         Uses mfcc for comparison.
         """
-        mfccs = {'mfcc0': np.empty(20), 'mfcc1': np.empty(20), 'mfcc2': np.empty(20)}
+        mfccs = {'mfcc0': [], 'mfcc1': [], 'mfcc2': []}
         
+        #print(mfccs['mfcc0'])
         # Emptying similarities
         for i in range(1,3):
             self.d['loop'+str(i)]['similarity'] = np.array([])
@@ -112,24 +113,23 @@ class LoopStorm(QMainWindow):
             for j in range(self.d['loop'+str(i)]['indices'].size-1):
                 min_frame = self.d['loop'+str(i)]['indices'][j]
                 max_frame = self.d['loop'+str(i)]['indices'][j+1]
-                mfcc = lb.feature.mfcc(y=self.d['loop' + str(i)]['loop'][min_frame:max_frame], sr=self.sr, n_mfcc=20, norm='ortho')
+                mfcc = lb.feature.mfcc(y=self.d['loop' + str(i)]['loop'][min_frame:max_frame], sr=self.sr, n_mfcc=12)
                 mfcc_reduct = np.mean(mfcc, axis=1)
-                mfccs['mfcc'+str(i)] = np.vstack([mfccs['mfcc'+str(i)], [mfcc_reduct]])
+                mfccs['mfcc'+str(i)].append(mfcc_reduct)
 
         # Compute similarities
         for i in range(1,3):
             for j in range(np.shape(mfccs['mfcc'+str(i)])[0]):
                 current_mfcc = mfccs['mfcc' + str(i)][j]
                 distance = dist(mfccs['mfcc0'][self.d['slices'][0]], current_mfcc)
-                print(mfccs['mfcc0'][self.d['slices'][0]])
-                print(current_mfcc)
-                self.d['loop'+str(i)]['similarity'] = np.append(self.d['loop'+str(i)]['similarity'], round(distance))
+                #print(mfccs['mfcc0'][self.d['slices'][0]])
+                self.d['loop'+str(i)]['similarity'] = np.append(self.d['loop'+str(i)]['similarity'], distance)
 
         # Normalize similarities
         conc = np.concatenate((self.d['loop1']['similarity'], self.d['loop2']['similarity']))
-        aux = max(conc) - min(conc)
-        self.d['loop1']['similarity'] = (self.d['loop1']['similarity'] - min(conc)) / aux
-        self.d['loop2']['similarity'] = (self.d['loop2']['similarity'] - min(conc)) / aux
+        self.d['loop1']['similarity'] = (self.d['loop1']['similarity'] - min(conc)) / (max(conc) - min(conc))
+        self.d['loop2']['similarity'] = (self.d['loop2']['similarity'] - min(conc)) / (max(conc) - min(conc))
+        # print(self.d['loop1']['similarity'])
         
     def generate_image(self, i, position):
         """
