@@ -7,30 +7,38 @@ import threading
 import atexit
 import sounddevice as sd
 import soundfile as sf
+from pydub.playback import play
 
-from math import dist 
 import librosa as lb
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import distance as dis
+from scipy.spatial import distance
 
 
 class LoopStorm(QMainWindow):
     stereo_loops = []
-    d = {'loop0': {}, 'loop1': {}, 'loop2': {}, 'slices': []}
+    d = {'loop0': {}, 'loop1': {}, 'loop2': {}}
+
+    for i in range(3):
+        d['loop'+str(i)]['loop'] = []  # Entire loops
+        d['loop'+str(i)]['stamps'] = []  # Times of the onset values
+        d['loop' + str(i)]['indices'] = []  # Sample indices of the onset values
+
+    for i in range(1, 3):
+        d['loop'+str(i)]['similarity'] = [] # Similarities of the slave loops current slices to the master current slice
 
     n_loops = 0  # number of loops currently in the program
     sr = 44100  # Sample frequency
     selected_loop = 0  # Currently selected loop (0: master, 1:slave loop 1, 2:slave loop 2)
-    #saved_master = [] # Saved master slice (used to put back functionality)
+    selected_master_slice = 0  # Currently selected master slice
+    selected_slave_slice = 0  # Currently selected slave slice
     current_frame = 0  # Used in play button
 
     def __init__(self):
         super().__init__()
-        uic.loadUi("LoopStormInterface.ui", self)
+        uic.loadUi("LoopStormInterface_Edgar.ui", self)
         self.setWindowTitle("Loopstorm")
-        self.empty_dictionaries()
-        self.importLoops.clicked.connect(lambda: self.import_loops())
+        self.importLoops.clicked.connect(lambda: self.import_loops(3))
         self.deleteLoop.clicked.connect(lambda: self.remove_loop())
         self.exportMaster.clicked.connect(lambda: self.export_master())
         self.selectMaster.clicked.connect(lambda: self.select_loop(0))
@@ -40,18 +48,18 @@ class LoopStorm(QMainWindow):
         self.rightArrow.clicked.connect(lambda: self.master_arrow("right"))
         self.leftArrow_2.clicked.connect(lambda: self.slave_arrow("left"))
         self.rightArrow_2.clicked.connect(lambda: self.slave_arrow("right"))
-        self.replace.clicked.connect(lambda: self.replaceF(False))
-        self.putBack.clicked.connect(lambda: self.replaceF(True))
         self.playButton.clicked.connect(lambda: self.play_button())
         self.playButton.setCheckable(True)
+        self.stopButton.setCheckable(True)
+        self.rep_slice_master.clicked.connect(lambda: self.play_master_slice())
+        self.rep_slice_slave.clicked.connect(lambda: self.play_slave_slice())
         atexit.register(self.exit_handler)
 
-    def import_loops(self):
+    def import_loops(self, limit):
         """
         Import .wav files into LoopStorm.
         Loops only come from the loops folder. Modify that folder if you want to use different loops.
         """
-        limit = 3
         aux_loops = []
         aux_time_onsets = []
         aux_index_onsets = []
@@ -88,9 +96,8 @@ class LoopStorm(QMainWindow):
 
         # Computing slices mfcc similarities
         self.compute_similarities()
-        
-        #print(self.d['loop1']['similarity'])
-        #print(self.d['loop2']['similarity'])
+        print(self.d['loop1']['similarity'])
+        print(self.d['loop2']['similarity'])
 
         # Generating the images
         for i in range(3):
@@ -105,37 +112,30 @@ class LoopStorm(QMainWindow):
         Computes similarities between the current master slice selected and all the slices from the slave loops.
         Uses mfcc for comparison.
         """
-        mfccs = {'mfcc0': np.empty(20), 'mfcc1': np.empty(20), 'mfcc2': np.empty(20)}
-        
-        # Emptying similarities
-        for i in range(1,3):
-            self.d['loop'+str(i)]['similarity'] = np.array([])
+        mfccs = {'mfcc0': [], 'mfcc1': [], 'mfcc2': []}
 
         # Get mfccs
         for i in range(3):
-            for j in range(self.d['loop'+str(i)]['indices'].size-1):
+            for j in range(len(self.d['loop'+str(i)]['indices'])-1):
                 min_frame = self.d['loop'+str(i)]['indices'][j]
                 max_frame = self.d['loop'+str(i)]['indices'][j+1]
                 mfcc = lb.feature.mfcc(y=self.d['loop' + str(i)]['loop'][min_frame:max_frame], sr=self.sr, n_mfcc=20, norm='ortho')
                 mfcc_reduct = np.mean(mfcc, axis=1)
-                mfccs['mfcc'+str(i)] = np.vstack([mfccs['mfcc'+str(i)], [mfcc_reduct]])
+                mfccs['mfcc'+str(i)].append(mfcc_reduct)
 
         # Compute similarities
         for i in range(1,3):
-            for j in range(np.shape(mfccs['mfcc'+str(i)])[0]):
+            for j in range(len(mfccs['mfcc'+str(i)])):
                 current_mfcc = mfccs['mfcc' + str(i)][j]
-                distance = dist(mfccs['mfcc0'][self.d['slices'][0]], current_mfcc)
-                print(mfccs['mfcc0'][self.d['slices'][0]])
-                print(current_mfcc)
-                self.d['loop'+str(i)]['similarity'] = np.append(self.d['loop'+str(i)]['similarity'], round(distance))
+                dist = 1 - distance.euclidean(mfccs['mfcc0'][self.selected_master_slice], current_mfcc)
+                self.d['loop'+str(i)]['similarity'].append(dist)
 
         # Normalize similarities
-        conc = np.concatenate((self.d['loop1']['similarity'], self.d['loop2']['similarity']))
-        aux = max(conc) - min(conc)
-        self.d['loop1']['similarity'] = (self.d['loop1']['similarity'] - min(conc)) / aux
-        self.d['loop2']['similarity'] = (self.d['loop2']['similarity'] - min(conc)) / aux
-        
-         
+        arr = self.d['loop1']['similarity']
+        arr2 = self.d['loop2']['similarity']
+        self.d['loop1']['similarity'] = (arr - np.min(arr+arr2)) / (np.max(arr+arr2) - np.min(arr+arr2))
+        self.d['loop2']['similarity'] = (arr2 - np.min(arr+arr2)) / (np.max(arr+arr2) - np.min(arr+arr2))
+
     def generate_image(self, i, position):
         """
         Receives an index i representing the corresponding loop and the slice position of the current slice selected.
@@ -150,7 +150,7 @@ class LoopStorm(QMainWindow):
         plt.xlim([0, total_time])
         plt.ylim([-1, 1])
         if i in range(1, 3):
-            for j in range(self.d['loop' + str(i)]['similarity'].size-1):
+            for j in range(len(self.d['loop' + str(i)]['similarity'])):
                 xmin = self.d['loop' + str(i)]['stamps'][j]
                 xmax = self.d['loop' + str(i)]['stamps'][j + 1]
                 loopmin = self.d['loop' + str(i)]['indices'][j]
@@ -185,15 +185,15 @@ class LoopStorm(QMainWindow):
         Receives a similarity value and returns its correspondent color.
         """
         if similarity>=0 and similarity<0.2:
-            return 'aqua'
+            return 'blue'
         elif similarity>0.2 and similarity<0.4:
-            return 'aquamarine'
+            return 'yellow'
         elif similarity>0.4 and similarity<0.6:
-            return 'beige'
+            return 'green'
         elif similarity>0.6 and similarity<0.8:
-            return 'red'
+            return 'pink'
         elif similarity>0.8 and similarity<=1:
-            return 'crimson'
+            return 'red'
         else:
             return 'black'
 
@@ -241,9 +241,8 @@ class LoopStorm(QMainWindow):
         Sets a given loop as selected.
         """
         self.selected_loop = number
-        #self.d['slices'][self.selected_loop] = 0
-        self.generate_image(self.selected_loop, self.d['slices'][self.selected_loop])
-
+        self.selected_slave_slice = 0
+        self.generate_image(self.selected_loop, self.selected_slave_slice)
         print("Loop", self.selected_loop, "selected")
         self.represent_loops()
 
@@ -251,23 +250,18 @@ class LoopStorm(QMainWindow):
         """
         """
         if direction == 'right':
-            if (self.d['slices'][0] +1) >= len(self.d['loop0']['stamps']):
+            if (self.selected_master_slice +1) >= len(self.d['loop0']['stamps']):
                 return
             else:
-                self.d['slices'][0] += 1
+                self.selected_master_slice += 1
         elif direction == 'left':
-            if (self.d['slices'][0]-1) < 0:
+            if (self.selected_master_slice-1) < 0:
                 return
             else:
-                self.d['slices'][0] -= 1
+                self.selected_master_slice -= 1
 
         self.compute_similarities()
-        
-        self.generate_image(0, self.d['slices'][0]) # Representing selected slice of master loop
-        # Updating colors of slaves
-        self.generate_image(1, self.d['slices'][1])
-        self.generate_image(2, self.d['slices'][2])
-        
+        self.generate_image(0, self.selected_master_slice)
         self.represent_loops()
 
     def slave_arrow(self, direction):
@@ -277,78 +271,21 @@ class LoopStorm(QMainWindow):
             return
 
         if direction == 'right':
-            if (self.d['slices'][self.selected_loop] +1) >= len(self.d['loop' + str(self.selected_loop)]['stamps']):
+            if (self.selected_slave_slice +1) >= len(self.d['loop' + str(self.selected_loop)]['stamps']):
                 return
             else:
-                self.d['slices'][self.selected_loop] += 1
+                self.selected_slave_slice += 1
         elif direction == 'left':
-            if (self.d['slices'][self.selected_loop]-1) < 0:
+            if (self.selected_slave_slice-1) < 0:
                 return
             else:
-                self.d['slices'][self.selected_loop] -= 1
+                self.selected_slave_slice -= 1
 
-        self.generate_image(self.selected_loop, self.d['slices'][self.selected_loop])
+        self.generate_image(self.selected_loop, self.selected_slave_slice)
         self.represent_loops()
-        
-    def replaceF(self, put_back):
-        """
-            Modify the master loop in the loops folder and import loops again.
-            The put back button only works for the last replaced slice.
-        """
-        if self.selected_loop == 0:
-            return
-        
-        if (self.d['slices'][self.selected_loop] == len(self.d['loop'+str(self.selected_loop)]['indices'])):
-            slv_minbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]]
-            slv_maxbound = len(self.d['loop'+str(self.selected_loop)]['loop'])
-        else:
-            slv_minbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]]
-            slv_maxbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]+1]
-            
-        slv_slice = self.d['loop'+str(self.selected_loop)]['loop'][slv_minbound:slv_maxbound]
 
-        if (self.d['slices'][0] == len(self.d['loop0']['indices'])):
-            mas_minbound = self.d['loop0']['indices'][self.d['slices'][0]]
-            mas_maxbound = len(self.d['loop0']['loop'])
-        else:
-            mas_minbound = self.d['loop0']['indices'][self.d['slices'][0]]
-            mas_maxbound = self.d['loop0']['indices'][self.d['slices'][0]+1]
-        
-        mas_part1 = self.d['loop0']['loop'][0:mas_minbound]
-        mas_part2 = self.d['loop0']['loop'][mas_maxbound:len(self.d['loop0']['loop'])]
-        
-        if (put_back == False):
-            sf.write('SavedMaster/MasterLoop.wav', self.d['loop0']['loop'], self.sr)
-            self.d['loop0']['loop'] = np.concatenate((mas_part1, slv_slice, mas_part2))
-        else:
-            y, sr = lb.load('SavedMaster/MasterLoop.wav', sr=None) 
-            self.d['loop0']['loop'] = y
-            
-        # Overwriting the audio file
-        sf.write('loops/audio1.wav', self.d['loop0']['loop'], self.sr)
-        
-        # Emptying program and importing back
-        self.empty_dictionaries()
-        self.n_loops = 0
-        self.import_loops()
-        
-    def empty_dictionaries(self):
-        """
-        Initializes empty dictionary
-        """
-        for i in range(3):
-            self.d['loop'+str(i)]['loop'] = np.array([])  # Entire loops
-            self.d['loop'+str(i)]['stamps'] = np.array([])  # Times of the onset values
-            self.d['loop' + str(i)]['indices'] = np.array([])  # Sample indices of the onset values
-
-        for i in range(1, 3):
-            self.d['loop'+str(i)]['similarity'] = np.array([]) # Similarities of the slave loops current slices to the master current slice
-        
-        self.d['slices'] = [0,0,0]
-        
     def play_button(self):
         """
-        Plays selected loop
         """
         event = threading.Event()
         # data, fs = sf.read(self.loops[0], always_2d=True)
@@ -368,8 +305,12 @@ class LoopStorm(QMainWindow):
                 outdata[chunksize:] = 0
                 self.current_frame = 0
             elif self.playButton.isChecked() == False:
-                # outdata[chunksize:] = 0
-                # self.current_frame = 0
+                #outdata[chunksize:] = 0
+                #self.current_frame = 0
+                raise sd.CallbackStop()
+            elif self.stopButton.isChecked() == True:
+                outdata[chunksize:] = 0
+                self.current_frame = 0
                 raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
@@ -381,8 +322,28 @@ class LoopStorm(QMainWindow):
         if self.playButton.isChecked():
             stream.start()
             event.wait(timeout=1)
+        elif self.stopButton.isChecked():
+            stream.stop()
         else:
             stream.stop()
+            
+    def play_master_slice(self):
+        """
+        """
+        print(self.d['loop'+str(0)]['stamps'])
+        #play()
+        
+    def play_slave_slice(self):
+        """
+        """
+        print(self.selected_master_slice)
+        print(self.selected_slave_slice)
+        #play()
+    
+    def stop_button(self):
+        """
+        """
+        
 
     def exit_handler(self):
         for i in range(0, 3):
