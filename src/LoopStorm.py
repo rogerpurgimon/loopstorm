@@ -22,7 +22,6 @@ class LoopStorm(QMainWindow):
     n_loops = 0  # number of loops currently in the program
     sr = 44100  # Sample frequency
     selected_loop = 0  # Currently selected loop (0: master, 1:slave loop 1, 2:slave loop 2)
-    #saved_master = [] # Saved master slice (used to put back functionality)
     current_frame = 0  # Used in play button
 
     def __init__(self):
@@ -88,9 +87,6 @@ class LoopStorm(QMainWindow):
 
         # Computing slices mfcc similarities
         self.compute_similarities()
-        
-        #print(self.d['loop1']['similarity'])
-        #print(self.d['loop2']['similarity'])
 
         # Generating the images
         for i in range(3):
@@ -135,7 +131,6 @@ class LoopStorm(QMainWindow):
         self.d['loop1']['similarity'] = (self.d['loop1']['similarity'] - min(conc)) / aux
         self.d['loop2']['similarity'] = (self.d['loop2']['similarity'] - min(conc)) / aux
         
-         
     def generate_image(self, i, position):
         """
         Receives an index i representing the corresponding loop and the slice position of the current slice selected.
@@ -202,7 +197,6 @@ class LoopStorm(QMainWindow):
         Checks the images generated in the folder LoopPictures and loads them in the interface.
         Return void.
         """
-
         if os.path.exists("LoopPictures/LoopPic0.png"):
             self.loop0.setPixmap(QtGui.QPixmap("LoopPictures/LoopPic0.png"))
         else:
@@ -241,7 +235,6 @@ class LoopStorm(QMainWindow):
         Sets a given loop as selected.
         """
         self.selected_loop = number
-        #self.d['slices'][self.selected_loop] = 0
         self.generate_image(self.selected_loop, self.d['slices'][self.selected_loop])
 
         print("Loop", self.selected_loop, "selected")
@@ -298,31 +291,35 @@ class LoopStorm(QMainWindow):
         if self.selected_loop == 0:
             return
         
-        if (self.d['slices'][self.selected_loop] == len(self.d['loop'+str(self.selected_loop)]['indices'])):
+        # We define the min and max limits for the chop (if statement to deal with the last slice) of the slave loop
+        if (self.d['slices'][self.selected_loop] == len(self.d['loop'+str(self.selected_loop)]['indices'])): # Checks if the current selected slave slice is the last
             slv_minbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]]
             slv_maxbound = len(self.d['loop'+str(self.selected_loop)]['loop'])
         else:
             slv_minbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]]
             slv_maxbound = self.d['loop'+str(self.selected_loop)]['indices'][self.d['slices'][self.selected_loop]+1]
             
+        # We store the slave slice in a variable
         slv_slice = self.d['loop'+str(self.selected_loop)]['loop'][slv_minbound:slv_maxbound]
 
-        if (self.d['slices'][0] == len(self.d['loop0']['indices'])):
+        # We define the min and max limits for the chop (if statement to deal with the last slice) of the master loop
+        if (self.d['slices'][0] == len(self.d['loop0']['indices'])): # Checks if the current selected master slice is the last
             mas_minbound = self.d['loop0']['indices'][self.d['slices'][0]]
             mas_maxbound = len(self.d['loop0']['loop'])
         else:
             mas_minbound = self.d['loop0']['indices'][self.d['slices'][0]]
             mas_maxbound = self.d['loop0']['indices'][self.d['slices'][0]+1]
         
+        # We store the master sections (before and after the replaced slice)
         mas_part1 = self.d['loop0']['loop'][0:mas_minbound]
         mas_part2 = self.d['loop0']['loop'][mas_maxbound:len(self.d['loop0']['loop'])]
         
         if (put_back == False):
-            sf.write('SavedMaster/MasterLoop.wav', self.d['loop0']['loop'], self.sr)
-            self.d['loop0']['loop'] = np.concatenate((mas_part1, slv_slice, mas_part2))
+            sf.write('SavedMaster/MasterLoop.wav', self.d['loop0']['loop'], self.sr) # Saving the current master loop
+            self.d['loop0']['loop'] = np.concatenate((mas_part1, slv_slice, mas_part2)) # We alter the master loop concatenating the three sections sliced
         else:
-            y, sr = lb.load('SavedMaster/MasterLoop.wav', sr=None) 
-            self.d['loop0']['loop'] = y
+            y, sr = lb.load('SavedMaster/MasterLoop.wav', sr=None) # Recovering previous master loop
+            self.d['loop0']['loop'] = y # We alter the master loop back to the unaltered version
             
         # Overwriting the audio file
         sf.write('loops/audio1.wav', self.d['loop0']['loop'], self.sr)
