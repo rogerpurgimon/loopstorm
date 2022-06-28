@@ -34,8 +34,13 @@ pip install -r requirements.txt
 ## Help
 
 ## Authors
+  * [Oriol Marín Esclasans][4]
+  * [Edgar Espinós Murria][5]
+  * [Leonardo Enzo Barros Souza Cidreira][6]
+  * [Roger Purgimon Serra][7]
 
-## Version History
+## License
+Distributed under the Appache License. See ``` LICENSE ``` for more information.
 
 ## Aknowledgments
 
@@ -45,3 +50,7 @@ pip install -r requirements.txt
 
 [3]:https://github.com/rogerpurgimon/loopstorm/blob/main/requirements.txt
 
+[4]:https://github.com/Uriiol1808
+[5]:https://github.com/u172926
+[6]:https://github.com/leonardbalm
+[7]:https://github.com/rogerpurgimon
