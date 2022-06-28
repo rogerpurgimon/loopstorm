@@ -12,7 +12,6 @@ from math import dist
 import librosa as lb
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import distance as dis
 
 
 class LoopStorm(QMainWindow):
@@ -42,6 +41,7 @@ class LoopStorm(QMainWindow):
         self.replace.clicked.connect(lambda: self.replaceF(False))
         self.putBack.clicked.connect(lambda: self.replaceF(True))
         self.playButton.clicked.connect(lambda: self.play_button())
+        self.slider.sliderReleased.connect(lambda: self.sliderF())
         self.playButton.setCheckable(True)
         atexit.register(self.exit_handler)
 
@@ -85,6 +85,7 @@ class LoopStorm(QMainWindow):
             self.n_loops += len(aux_loops)
             print("Loops imported.")
 
+        self.slider.setMaximum(len(self.d['loop0']['loop']))
         # Computing slices mfcc similarities
         self.compute_similarities()
 
@@ -217,28 +218,30 @@ class LoopStorm(QMainWindow):
         """
         Resets the selected loop to an empty list and removes its correspondent picture from the folder LoopPictures.
         """
-        self.d['loop' + str(self.selected_loop)]['loop'] = []
-        self.n_loops -= 1
-
-        os.remove("LoopPictures/LoopPic" + str(self.selected_loop) + ".png")
-        self.represent_loops()
+        if (self.d['loop'+str(self.selected_loop)]['loop'].size > 0):
+            self.d['loop' + str(self.selected_loop)]['loop'] = []
+            self.n_loops -= 1
+            os.remove("LoopPictures/LoopPic" + str(self.selected_loop) + ".png")
+            self.represent_loops()
 
     def export_master(self):
         """
         Exports the current master loop.
         If done more than once replaces previously exported master loops. Edit Exports files to export more than once.
         """
-        sf.write('Exports/MasterLoop.wav', self.d['loop0']['loop'], self.sr)
+        if (self.d['loop0']['loop'].size > 0):
+            sf.write('Exports/MasterLoop.wav', self.d['loop0']['loop'], self.sr)
 
     def select_loop(self, number):
         """
         Sets a given loop as selected.
         """
-        self.selected_loop = number
-        self.generate_image(self.selected_loop, self.d['slices'][self.selected_loop])
-
-        print("Loop", self.selected_loop, "selected")
-        self.represent_loops()
+        if (self.d['loop'+str(number)]['loop'].size > 0):
+            self.selected_loop = number
+            self.slider.setMaximum(len(self.d['loop'+str(self.selected_loop)]['loop']))
+            self.generate_image(self.selected_loop, self.d['slices'][self.selected_loop])
+            print("Loop", self.selected_loop, "selected")
+            self.represent_loops()
 
     def master_arrow(self, direction):
         """
@@ -317,6 +320,8 @@ class LoopStorm(QMainWindow):
         if (put_back == False):
             sf.write('SavedMaster/MasterLoop.wav', self.d['loop0']['loop'], self.sr) # Saving the current master loop
             self.d['loop0']['loop'] = np.concatenate((mas_part1, slv_slice, mas_part2)) # We alter the master loop concatenating the three sections sliced
+            #self.stereo_loops.pop(0)
+            #self.stereo_loops.insert(0, [self.d['loop0']['loop'], self.d['loop0']['loop']])
         else:
             y, sr = lb.load('SavedMaster/MasterLoop.wav', sr=None) # Recovering previous master loop
             self.d['loop0']['loop'] = y # We alter the master loop back to the unaltered version
@@ -343,43 +348,37 @@ class LoopStorm(QMainWindow):
         
         self.d['slices'] = [0,0,0]
         
+    def sliderF(self):
+        print(self.slider.sliderPosition())
+        self.current_frame = self.slider.sliderPosition()
+        print(self.current_frame)
+
     def play_button(self):
         """
         Plays selected loop
         """
         event = threading.Event()
-        # data, fs = sf.read(self.loops[0], always_2d=True)
-        # current_frame = 0
-
-        # we always assume the main loop is the main in loops[0]
         data = self.stereo_loops[self.selected_loop]
         fs = self.sr
 
         def callback(outdata, frames, time, status):
-            # global current_frame
-            if status:
-                print(status)
             chunksize = min(len(data) - self.current_frame, frames)
             outdata[:chunksize] = data[self.current_frame:self.current_frame + chunksize]
             if chunksize < frames:
                 outdata[chunksize:] = 0
                 self.current_frame = 0
             elif self.playButton.isChecked() == False:
-                # outdata[chunksize:] = 0
-                # self.current_frame = 0
                 raise sd.CallbackStop()
             else:
                 self.current_frame += chunksize
+                self.slider.setSliderPosition(self.current_frame)
+                print(self.slider.sliderPosition())
 
         stream = sd.OutputStream(
             samplerate=fs, channels=data.shape[1],
             callback=callback, finished_callback=event.set)
 
-        if self.playButton.isChecked():
-            stream.start()
-            event.wait(timeout=1)
-        else:
-            stream.stop()
+        stream.start()
 
     def exit_handler(self):
         for i in range(0, 3):
