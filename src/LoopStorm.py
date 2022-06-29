@@ -104,7 +104,6 @@ class LoopStorm(QMainWindow):
         """
         mfccs = {'mfcc0': [], 'mfcc1': [], 'mfcc2': []}
         
-        #print(mfccs['mfcc0'])
         # Emptying similarities
         for i in range(1,3):
             self.d['loop'+str(i)]['similarity'] = np.array([])
@@ -123,14 +122,12 @@ class LoopStorm(QMainWindow):
             for j in range(np.shape(mfccs['mfcc'+str(i)])[0]):
                 current_mfcc = mfccs['mfcc' + str(i)][j]
                 distance = dist(mfccs['mfcc0'][self.d['slices'][0]], current_mfcc)
-                #print(mfccs['mfcc0'][self.d['slices'][0]])
                 self.d['loop'+str(i)]['similarity'] = np.append(self.d['loop'+str(i)]['similarity'], distance)
 
         # Normalize similarities
         conc = np.concatenate((self.d['loop1']['similarity'], self.d['loop2']['similarity']))
         self.d['loop1']['similarity'] = (self.d['loop1']['similarity'] - min(conc)) / (max(conc) - min(conc))
         self.d['loop2']['similarity'] = (self.d['loop2']['similarity'] - min(conc)) / (max(conc) - min(conc))
-        # print(self.d['loop1']['similarity'])
         
     def generate_image(self, i, position):
         """
@@ -291,7 +288,7 @@ class LoopStorm(QMainWindow):
             Modify the master loop in the loops folder and import loops again.
             The put back button only works for the last replaced slice.
         """
-        if self.selected_loop == 0:
+        if self.selected_loop == 0 and put_back == False:
             return
         
         # We define the min and max limits for the chop (if statement to deal with the last slice) of the slave loop
@@ -320,8 +317,6 @@ class LoopStorm(QMainWindow):
         if (put_back == False):
             sf.write('SavedMaster/MasterLoop.wav', self.d['loop0']['loop'], self.sr) # Saving the current master loop
             self.d['loop0']['loop'] = np.concatenate((mas_part1, slv_slice, mas_part2)) # We alter the master loop concatenating the three sections sliced
-            #self.stereo_loops.pop(0)
-            #self.stereo_loops.insert(0, [self.d['loop0']['loop'], self.d['loop0']['loop']])
         else:
             y, sr = lb.load('SavedMaster/MasterLoop.wav', sr=None) # Recovering previous master loop
             self.d['loop0']['loop'] = y # We alter the master loop back to the unaltered version
@@ -329,6 +324,11 @@ class LoopStorm(QMainWindow):
         # Overwriting the audio file
         sf.write('loops/audio1.wav', self.d['loop0']['loop'], self.sr)
         
+        # Reading as stereo and replacing loop for playback
+        self.stereo_loops.pop(0)
+        loop, fs = sf.read('loops/audio1.wav', always_2d=True)  # Also storing the audio in stereo for the play button
+        self.stereo_loops.insert(0, loop)
+            
         # Emptying program and importing back
         self.empty_dictionaries()
         self.n_loops = 0
@@ -349,9 +349,7 @@ class LoopStorm(QMainWindow):
         self.d['slices'] = [0,0,0]
         
     def sliderF(self):
-        print(self.slider.sliderPosition())
         self.current_frame = self.slider.sliderPosition()
-        print(self.current_frame)
 
     def play_button(self):
         """
@@ -372,7 +370,7 @@ class LoopStorm(QMainWindow):
             else:
                 self.current_frame += chunksize
                 self.slider.setSliderPosition(self.current_frame)
-                print(self.slider.sliderPosition())
+                #print(self.slider.sliderPosition())
 
         stream = sd.OutputStream(
             samplerate=fs, channels=data.shape[1],
