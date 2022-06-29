@@ -30,6 +30,8 @@ pip install -r requirements.txt
 
 
 ### Executing program
+Click in the image to watch the video:
+[![Watch the video](https://user-images.githubusercontent.com/47043537/176453552-ea58d8a1-7e4d-4652-9820-c57c2fd4108d.PNG)](https://drive.google.com/file/d/1HDuZrbd0VSElPXVJa_I8fys9b9Il735X/view?usp=sharing)
 
 ## Help
 
