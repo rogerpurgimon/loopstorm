@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt
 
 class LoopStorm(QMainWindow):
     stereo_loops = []
-    d = {'loop0': {}, 'loop1': {}, 'loop2': {}, 'slices': []}
+    d = {'loop0': {}, 'loop1': {}, 'loop2': {}, 'slices': []} # Main dictionary
 
     n_loops = 0  # number of loops currently in the program
     sr = 44100  # Sample frequency
     selected_loop = 0  # Currently selected loop (0: master, 1:slave loop 1, 2:slave loop 2)
-    current_frame = 0  # Used in play button
+    current_frame = 0  # Current frame of the selected loop to be reproduced using the play button
 
     def __init__(self):
         super().__init__()
@@ -50,13 +50,15 @@ class LoopStorm(QMainWindow):
         Import .wav files into LoopStorm.
         Loops only come from the loops folder. Modify that folder if you want to use different loops.
         """
-        limit = 3
+        limit = 3 # Default maximum number of loops in the program
+        # Auxiliary lists
         aux_loops = []
         aux_time_onsets = []
         aux_index_onsets = []
 
         if '.DS_Store' in os.listdir('loops'):  # Possible bug caused by MacOS
             os.remove('loops/.DS_Store')
+            
         # Filling auxiliary lists with all the loops, time and sample indices
         for filename in sorted(os.listdir('loops')):
             arg = "loops/" + filename
@@ -242,7 +244,9 @@ class LoopStorm(QMainWindow):
 
     def master_arrow(self, direction):
         """
+        Function that controls the master slice arrows
         """
+        # Limit conditions so the user cant surpass the amount of available slices
         if direction == 'right':
             if (self.d['slices'][0] +1) >= len(self.d['loop0']['stamps']):
                 return
@@ -265,10 +269,13 @@ class LoopStorm(QMainWindow):
 
     def slave_arrow(self, direction):
         """
+        Function that controls the slave slice arrows
         """
+        # A slave loop has to be selected for the arrows to work
         if self.selected_loop == 0:
             return
 
+        # Limit conditions so the user cant surpass the amount of available slices
         if direction == 'right':
             if (self.d['slices'][self.selected_loop] +1) >= len(self.d['loop' + str(self.selected_loop)]['stamps']):
                 return
@@ -285,8 +292,8 @@ class LoopStorm(QMainWindow):
         
     def replaceF(self, put_back):
         """
-            Modify the master loop in the loops folder and import loops again.
-            The put back button only works for the last replaced slice.
+        Replace Function.
+        The put back button only works for the last replaced slice.
         """
         if self.selected_loop == 0 and put_back == False:
             return
@@ -349,6 +356,9 @@ class LoopStorm(QMainWindow):
         self.d['slices'] = [0,0,0]
         
     def sliderF(self):
+        """
+        Sets the current frame of the audio to the position of the slider
+        """
         self.current_frame = self.slider.sliderPosition()
 
     def play_button(self):
