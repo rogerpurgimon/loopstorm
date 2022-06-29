@@ -12,6 +12,14 @@ The application will start from an input user that decides the main loop, import
 
 ## Getting Started
 ### Dependencies
+The programming language used in this project is Python. We recommend Linux as the operating system. In case of using MacOS the installation is a bit cumbersome. Same happens with Windows, an Ubuntu environment is needed (WSL) and a display server is also needed in order to run the GUI application in the Windows device. We do not require a high processor speed, or a lot of system memory and storage space. What we need is audio hardware to be able to listen to the  drum loops, could be headphones or speakers. We recommend good quality headphones in order to appreciate the difference between the original loop and the new one. 
+
+The code also requires some essential requirements such as imports, for instance, there is AudioExtractor.py, a script from which we obtain the MFCCs from the slices given by the onset detector. In this case, we mainly need NumPy and Essentia, which is the tool we are going to use the most in terms of developing the automatic slicing with the onset detection method and in order to compute the Mel-Frequency Cepstrum coefficients.
+
+Nonetheless, other scripts need different imports from libraries like SciPy [16], IPython in order to play the audios, Scikit-learn or Matplotlib that will be useful in the development process to test all the implementations. And PyQt5 in order to visualize the interface. All the specific versions of each library are specified in the requirements.txt file.
+
+In order to make the installation of these libraries and packages easier, all of them are in a requirements.txt with the minimum version necessary.
+
 
 ### Installing
 1. Clone the repository
